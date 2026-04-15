@@ -19,16 +19,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  CheckCircle2,
   ChevronRight,
   Cpu,
   HardDrive,
   Heart,
   MessageSquare,
-  Phone,
   Shield,
   Star,
   Smartphone,
@@ -73,11 +70,10 @@ function StartChatButton({ listing }: { listing: Listing }) {
         setIsLoading(true);
 
         try {
-            const conversationId = [listing.id, user.uid, listing.seller.id].sort().join('_');
-            const conversationRef = collection(firestore, 'conversations');
+            const conversationsRef = collection(firestore, 'conversations');
 
             const q = query(
-              conversationRef,
+              conversationsRef,
               where('listingId', '==', listing.id),
               where('buyerId', '==', user.uid)
             );
@@ -91,8 +87,7 @@ function StartChatButton({ listing }: { listing: Listing }) {
                 // Create a new conversation
                 const sellerProfile = listing.seller;
                 
-                await addDoc(conversationRef, {
-                    id: conversationId,
+                const newConversationRef = await addDoc(conversationsRef, {
                     listingId: listing.id,
                     buyerId: user.uid,
                     sellerId: listing.seller.id,
@@ -108,7 +103,7 @@ function StartChatButton({ listing }: { listing: Listing }) {
                     sellerName: sellerProfile.name,
                     sellerAvatar: sellerProfile.avatar,
                 });
-                router.push(`/messages/${conversationId}`);
+                router.push(`/messages/${newConversationRef.id}`);
             }
 
         } catch (error: any) {
@@ -136,7 +131,8 @@ export default function ListingDetailPage({
 }: {
   params: { id: string };
 }) {
-  const listing = listings.find((l) => l.id === params.id);
+  const { id } = params;
+  const listing = listings.find((l) => l.id === id);
 
   if (!listing) {
     notFound();
