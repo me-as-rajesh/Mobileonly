@@ -4,9 +4,9 @@ const firebaseConfig: FirebaseOptions = {
   apiKey: "AIzaSyBfXuVzsWrSf3Qrae6gufiAGoXFGJ7xvNY",
   authDomain: "mobileonly-a2ef0.firebaseapp.com",
   projectId: "mobileonly-a2ef0",
-  storageBucket: "mobileonly-a2ef0.appspot.com",
+  storageBucket: "mobileonly-a2ef0.firebasestorage.app",
   messagingSenderId: "1087863751665",
-  appId: "1:1087863751665:web:1428f97f0dc34668987a50"
+  appId: "1:1087863751665:web:bcfc1e6ca581bef7987a50"
 };
 
 export function getFirebaseConfig() {
