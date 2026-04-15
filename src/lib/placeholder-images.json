@@ -3,73 +3,73 @@
     {
       "id": "listing-1",
       "description": "A sleek black smartphone lying on a dark textured surface.",
-      "imageUrl": "https://picsum.photos/seed/l1/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/ecommerce/smartphone-h.jpg",
       "imageHint": "smartphone dark"
     },
     {
       "id": "listing-2",
       "description": "A white smartphone with a vibrant screen display against a minimalist background.",
-      "imageUrl": "https://picsum.photos/seed/l2/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/ecommerce/smartphone-v.jpg",
       "imageHint": "smartphone white"
     },
     {
       "id": "listing-3",
       "description": "A person holding a modern smartphone, showcasing its screen.",
-      "imageUrl": "https://picsum.photos/seed/l3/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/tech/mobile-app.jpg",
       "imageHint": "holding smartphone"
     },
     {
       "id": "listing-4",
       "description": "Close-up of a smartphone's camera module.",
-      "imageUrl": "https://picsum.photos/seed/l4/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/tech/mobile-phone.jpg",
       "imageHint": "phone camera"
     },
     {
       "id": "listing-5",
       "description": "A blue smartphone with water droplets on it.",
-      "imageUrl": "https://picsum.photos/seed/l5/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/landscapes/smartphone-photography.jpg",
       "imageHint": "smartphone blue"
     },
     {
       "id": "listing-6",
       "description": "A smartphone being charged on a wireless charging pad.",
-      "imageUrl": "https://picsum.photos/seed/l6/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/ecommerce/analog-watch.jpg",
       "imageHint": "wireless charging"
     },
     {
       "id": "listing-7",
       "description": "A silver smartphone from a side angle, showing its thin profile.",
-      "imageUrl": "https://picsum.photos/seed/l7/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/ecommerce/smart-watch.jpg",
       "imageHint": "smartphone silver"
     },
     {
       "id": "listing-8",
       "description": "A smartphone with a cracked screen.",
-      "imageUrl": "https://picsum.photos/seed/l8/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/people/boy-outdoors.jpg",
       "imageHint": "cracked screen"
     },
     {
       "id": "listing-9",
       "description": "A collection of different colored smartphones arranged neatly.",
-      "imageUrl": "https://picsum.photos/seed/l9/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/ecommerce/leather-bag-gray.jpg",
       "imageHint": "smartphones collection"
     },
     {
       "id": "listing-10",
       "description": "A smartphone with a case on, lying on a wooden desk.",
-      "imageUrl": "https://picsum.photos/seed/l10/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/ecommerce/headphones.jpg",
       "imageHint": "phone case"
     },
     {
       "id": "listing-11",
       "description": "A smartphone displaying a map application.",
-      "imageUrl": "https://picsum.photos/seed/l11/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/tech/gaming-setup.jpg",
       "imageHint": "phone map"
     },
     {
       "id": "listing-12",
       "description": "A person's hands typing on a smartphone keyboard.",
-      "imageUrl": "https://picsum.photos/seed/l12/800/600",
+      "imageUrl": "https://res.cloudinary.com/doon0x2bh/image/upload/v1678886400/samples/tech/laptop-on-table.jpg",
       "imageHint": "typing phone"
     }
   ]

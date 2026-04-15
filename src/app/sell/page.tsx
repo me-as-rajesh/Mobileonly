@@ -35,12 +35,13 @@ import {
   RAM_OPTIONS,
   STORAGE_OPTIONS,
 } from "@/lib/types";
-import { AlertCircle, Bot, Check, Loader2, Sparkles } from "lucide-react";
+import { Bot, Check, Loader2, Sparkles, UploadCloud, X, Image as ImageIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
-const PriceSuggestionSchema = z.object({
+const CreateListingSchema = z.object({
   brand: z.string().min(1, "Brand is required"),
   model: z.string().min(1, "Model is required"),
   ram: z.coerce.number().min(1, "RAM is required"),
@@ -50,19 +51,30 @@ const PriceSuggestionSchema = z.object({
     .number()
     .min(2010, "Invalid year")
     .max(new Date().getFullYear(), "Year cannot be in the future"),
+  title: z.string().min(10, "Title must be at least 10 characters").max(100),
+  description: z.string().min(20, "Description must be at least 20 characters").max(1000),
+  price: z.coerce.number().min(1, "Price is required"),
+  images: z.array(z.string().url()).min(1, "At least one image is required").max(8, "You can upload a maximum of 8 images."),
 });
+
+type CreateListingInput = z.infer<typeof CreateListingSchema>;
 
 export default function SellPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPriceLoading, setIsPriceLoading] = useState(false);
   const [priceSuggestion, setPriceSuggestion] = useState<PriceSuggestion | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<PriceSuggestionInput>({
-    resolver: zodResolver(PriceSuggestionSchema),
+  const form = useForm<CreateListingInput>({
+    resolver: zodResolver(CreateListingSchema),
+    defaultValues: {
+      images: [],
+    }
   });
 
-  const onSubmit: SubmitHandler<PriceSuggestionInput> = async (data) => {
-    setIsSubmitting(true);
+  const handlePriceSuggest: SubmitHandler<PriceSuggestionInput> = async (data) => {
+    setIsPriceLoading(true);
     setPriceSuggestion(null);
     try {
       const result = await getSuggestedPrice(data);
@@ -74,6 +86,7 @@ export default function SellPage() {
         });
       } else {
         setPriceSuggestion(result.data!);
+        form.setValue('price', result.data!.suggestedPrice);
       }
     } catch (error) {
       toast({
@@ -82,9 +95,72 @@ export default function SellPage() {
         description: "Please try again later.",
       });
     } finally {
-      setIsSubmitting(false);
+      setIsPriceLoading(false);
     }
   };
+
+  const onFinalSubmit: SubmitHandler<CreateListingInput> = async (data) => {
+    setIsSubmitting(true);
+    console.log("Final Listing Data:", data);
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    toast({
+      title: "Listing Created!",
+      description: "Your new listing has been successfully created.",
+    });
+    form.reset();
+    setPriceSuggestion(null);
+    setIsSubmitting(false);
+  }
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files) return;
+
+    const currentImageCount = form.getValues('images').length;
+    if (files.length + currentImageCount > 8) {
+      toast({
+        variant: 'destructive',
+        title: 'Too many images',
+        description: `You can only upload a maximum of 8 images. You have already selected ${currentImageCount}.`,
+      });
+      return;
+    }
+    
+    setIsUploading(true);
+    const uploadedUrls = form.getValues('images');
+
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const result = await res.json();
+        if (result.success) {
+          uploadedUrls.push(result.url);
+        } else {
+          throw new Error(result.error || 'Upload failed');
+        }
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Upload Failed',
+          description: (error as Error).message,
+        });
+        break; 
+      }
+    }
+    form.setValue('images', uploadedUrls);
+    setIsUploading(false);
+  };
+
+  const handleRemoveImage = (urlToRemove: string) => {
+    const currentImages = form.getValues('images');
+    form.setValue('images', currentImages.filter(url => url !== urlToRemove));
+  }
+
 
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4 md:px-6">
@@ -93,25 +169,28 @@ export default function SellPage() {
           Sell Your Smartphone
         </h1>
         <p className="text-muted-foreground text-lg">
-          Follow our simple steps to list your device and get the best price.
+          Fill in your device details to create a new listing.
         </p>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="text-accent"/>
-            AI Price Suggestion
-          </CardTitle>
-          <CardDescription>
-            Fill in your phone's details to get a fair market price suggestion from our AI.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form onSubmit={form.handleSubmit(onFinalSubmit)}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Device Details</CardTitle>
+            <CardDescription>
+              Provide the core specifications of the phone you want to sell.
+            </CardDescription>
+          </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="title">Listing Title</Label>
+              <Input id="title" placeholder="e.g., Excellent Condition iPhone 15 Pro 256GB" {...form.register("title")} />
+              {form.formState.errors.title && <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="brand">Brand</Label>
-              <Select {...form.register("brand")} onValueChange={(value) => form.setValue("brand", value)}>
+              <Select onValueChange={(value) => form.setValue("brand", value)}>
                 <SelectTrigger id="brand">
                   <SelectValue placeholder="Select Brand" />
                 </SelectTrigger>
@@ -134,7 +213,7 @@ export default function SellPage() {
             
             <div className="space-y-2">
               <Label htmlFor="ram">RAM</Label>
-              <Select {...form.register("ram")} onValueChange={(value) => form.setValue("ram", Number(value))}>
+              <Select onValueChange={(value) => form.setValue("ram", Number(value))}>
                 <SelectTrigger id="ram">
                   <SelectValue placeholder="Select RAM" />
                 </SelectTrigger>
@@ -149,7 +228,7 @@ export default function SellPage() {
 
             <div className="space-y-2">
               <Label htmlFor="storage">Storage</Label>
-              <Select {...form.register("storage")} onValueChange={(value) => form.setValue("storage", Number(value))}>
+              <Select onValueChange={(value) => form.setValue("storage", Number(value))}>
                 <SelectTrigger id="storage">
                   <SelectValue placeholder="Select Storage" />
                 </SelectTrigger>
@@ -166,7 +245,7 @@ export default function SellPage() {
 
              <div className="space-y-2">
               <Label htmlFor="condition">Condition</Label>
-              <Select {...form.register("condition")} onValueChange={(value) => form.setValue("condition", value as any)}>
+              <Select onValueChange={(value) => form.setValue("condition", value as any)}>
                 <SelectTrigger id="condition">
                   <SelectValue placeholder="Select Condition" />
                 </SelectTrigger>
@@ -184,17 +263,60 @@ export default function SellPage() {
               <Input id="purchaseYear" type="number" placeholder="e.g., 2022" {...form.register("purchaseYear")} />
                {form.formState.errors.purchaseYear && <p className="text-sm text-destructive">{form.formState.errors.purchaseYear.message}</p>}
             </div>
+            
+            <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea id="description" placeholder="Describe the phone's condition, any accessories included, etc." {...form.register("description")} />
+                {form.formState.errors.description && <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="images">Images</Label>
+                <div className="p-4 border-2 border-dashed rounded-lg text-center">
+                    <input type="file" id="image-upload" multiple accept="image/*" className="hidden" onChange={handleImageUpload} disabled={isUploading}/>
+                    <label htmlFor="image-upload" className={cn("cursor-pointer", {"cursor-not-allowed opacity-50": isUploading})}>
+                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground"/>
+                        <p className="mt-2 text-sm text-muted-foreground">Click or drag to upload images (up to 8)</p>
+                        {isUploading && <div className="flex items-center justify-center mt-2"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</div>}
+                    </label>
+                </div>
+                 {form.formState.errors.images && <p className="text-sm text-destructive">{form.formState.errors.images.message}</p>}
+
+                <div className="grid grid-cols-4 gap-4 mt-4">
+                    {form.watch('images').map(url => (
+                        <div key={url} className="relative group aspect-square">
+                            <Image src={url} alt="Uploaded image" layout="fill" className="object-cover rounded-md"/>
+                             <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveImage(url)}>
+                                <X className="h-4 w-4"/>
+                            </Button>
+                        </div>
+                    ))}
+                    {isUploading && Array.from({length: 1}).map((_, i) => (
+                        <div key={i} className="aspect-square bg-muted rounded-md flex items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground"/>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="price">Price (INR)</Label>
+              <div className="flex gap-2">
+                <Input id="price" type="number" placeholder="e.g., 45000" {...form.register("price")} className="flex-1"/>
+                <Button type="button" variant="outline" disabled={isPriceLoading} onClick={form.handleSubmit(handlePriceSuggest)}>
+                  {isPriceLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  Get AI Suggestion
+                </Button>
+              </div>
+              {form.formState.errors.price && <p className="text-sm text-destructive">{form.formState.errors.price.message}</p>}
+            </div>
+
           </CardContent>
           <CardFooter className="flex-col items-stretch gap-4">
-             <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Sparkles className="mr-2 h-4 w-4" />
-              )}
-              Get AI Price Suggestion
-            </Button>
-
             {priceSuggestion && (
               <Alert variant="default" className="bg-accent/20 border-accent/50">
                  <Bot className="h-4 w-4 text-accent" />
@@ -215,17 +337,20 @@ export default function SellPage() {
                           <div className="text-lg font-bold">₹{priceSuggestion.maxPrice.toLocaleString('en-IN')}</div>
                       </div>
                   </div>
-                   <div className="flex gap-2 mt-4">
-                     <Button className="w-full" onClick={() => {}}>
-                       <Check className="mr-2 h-4 w-4"/> Use This Price & Continue
-                     </Button>
-                   </div>
                 </AlertDescription>
               </Alert>
             )}
+             <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+              {isSubmitting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="mr-2 h-4 w-4" />
+              )}
+              Create Listing
+            </Button>
           </CardFooter>
-        </form>
-      </Card>
+        </Card>
+      </form>
     </div>
   );
 }
