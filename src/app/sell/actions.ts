@@ -2,13 +2,13 @@
 
 import {
   suggestListingPrice,
-  type SuggestListingPriceInput,
+  type SuggestListingPriceInput as OriginalSuggestListingPriceInput,
   type SuggestListingPriceOutput,
 } from "@/ai/flows/suggest-listing-price";
 import { z } from "zod";
 
 export type PriceSuggestion = SuggestListingPriceOutput;
-export type { SuggestListingPriceInput };
+export type SuggestListingPriceInput = OriginalSuggestListingPriceInput;
 
 const PriceSuggestionSchema = z.object({
   brand: z.string(),
