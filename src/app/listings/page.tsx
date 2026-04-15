@@ -13,7 +13,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState, useMemo } from "react";
 import { getDistance } from "@/lib/utils";
-import type { Location } from "@/lib/locations";
+import type { Location } from "@/lib/types";
 
 export interface FilterState {
   brand: string;

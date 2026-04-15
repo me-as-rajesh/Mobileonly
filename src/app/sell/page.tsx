@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -34,14 +34,15 @@ import {
   CONDITIONS,
   RAM_OPTIONS,
   STORAGE_OPTIONS,
+  type Location,
 } from "@/lib/types";
 import { Bot, Check, Loader2, Sparkles, UploadCloud, X, Image as ImageIcon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { Combobox } from "@/components/ui/combobox";
-import { locationOptions } from "@/lib/locations";
+import PlacesAutocomplete from "@/components/ui/places-autocomplete";
+import type { Place } from "@/components/ui/places-autocomplete";
 
 const CreateListingSchema = z.object({
   brand: z.string().min(1, "Brand is required"),
@@ -56,7 +57,9 @@ const CreateListingSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters").max(100),
   description: z.string().min(20, "Description must be at least 20 characters").max(1000),
   price: z.coerce.number().min(1, "Price is required"),
-  location: z.string().min(1, "Location is required"),
+  location: z.custom<Location>().nullable().refine(val => val !== null, {
+    message: "Please select a valid location from the suggestions.",
+  }),
   images: z.array(z.string().url()).min(1, "At least one image is required").max(8, "You can upload a maximum of 8 images."),
 });
 
@@ -73,6 +76,7 @@ export default function SellPage() {
     resolver: zodResolver(CreateListingSchema),
     defaultValues: {
       images: [],
+      location: null,
     }
   });
 
@@ -267,16 +271,30 @@ export default function SellPage() {
                {form.formState.errors.purchaseYear && <p className="text-sm text-destructive">{form.formState.errors.purchaseYear.message}</p>}
             </div>
 
-             <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="location">Location</Label>
-                <Combobox
-                    options={locationOptions}
-                    value={form.watch('location')}
-                    onChange={(value) => form.setValue('location', value)}
-                    placeholder="Select your city..."
-                    searchPlaceholder="Search for a city..."
-                />
-                 {form.formState.errors.location && <p className="text-sm text-destructive">{form.formState.errors.location.message}</p>}
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="location">Location</Label>
+              <Controller
+                name="location"
+                control={form.control}
+                render={({ field }) => (
+                  <PlacesAutocomplete
+                    id="sell-location"
+                    onPlaceSelect={(place) => {
+                      if (place) {
+                        const { address, ...locationData } = place;
+                        field.onChange(locationData);
+                      } else {
+                        field.onChange(null);
+                      }
+                    }}
+                  />
+                )}
+              />
+              {form.formState.errors.location && (
+                <p className="text-sm text-destructive">
+                  {(form.formState.errors.location as any).message}
+                </p>
+              )}
             </div>
             
             <div className="space-y-2 md:col-span-2">

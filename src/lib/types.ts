@@ -1,5 +1,12 @@
 import type { PlaceHolderImages } from "./placeholder-images";
 
+export type Location = {
+  city: string;
+  state: string;
+  lat: number;
+  lon: number;
+};
+
 export type Seller = {
   id: string;
   name: string;
@@ -24,12 +31,7 @@ export type Listing = {
   condition: "new" | "like_new" | "good" | "fair";
   description: string;
   images: (typeof PlaceHolderImages)[number]["id"][];
-  location: {
-    city: string;
-    state: string;
-    lat: number;
-    lon: number;
-  };
+  location: Location;
   purchaseYear?: number;
   seller: Seller;
   isBoosted: boolean;

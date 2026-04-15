@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  type SuggestListingPriceInput,
-} from "@/app/sell/actions";
+import { type SuggestListingPriceInput } from "@/app/sell/actions";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +29,7 @@ import {
   CONDITIONS,
   RAM_OPTIONS,
   STORAGE_OPTIONS,
+  type Location,
 } from "@/lib/types";
 import { Check, Loader2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -38,9 +37,7 @@ import { listings } from "@/lib/data";
 import { notFound, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Combobox } from "@/components/ui/combobox";
-import { locationOptions } from "@/lib/locations";
-
+import PlacesAutocomplete from "@/components/ui/places-autocomplete";
 
 const EditListingSchema = z.object({
   brand: z.string().min(1, "Brand is required"),
@@ -52,16 +49,17 @@ const EditListingSchema = z.object({
     .number()
     .min(2010, "Invalid year")
     .max(new Date().getFullYear(), "Year cannot be in the future"),
-  location: z.string().min(1, "Location is required"),
+  location: z.custom<Location>().nullable().refine(val => val !== null, {
+    message: "Please select a valid location from the suggestions.",
+  }),
 });
 
-// The form schema is a subset of the listing creation schema
-type EditListingInput = Omit<SuggestListingPriceInput, 'location'> & { location: string };
+type EditListingInput = z.infer<typeof EditListingSchema>;
 
 export default function EditListingPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const listing = listings.find(l => l.id === params.id);
-  
+  const listing = listings.find((l) => l.id === params.id);
+
   if (!listing) {
     notFound();
   }
@@ -78,20 +76,20 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
       storage: listing.variant.storage,
       condition: listing.condition,
       purchaseYear: listing.purchaseYear,
-      location: listing.location.city,
+      location: listing.location,
     },
   });
 
   const onSubmit: SubmitHandler<EditListingInput> = async (data) => {
     setIsSubmitting(true);
     console.log("Updated data:", data);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     toast({
       title: "Listing Updated",
       description: `${data.model} has been successfully updated.`,
     });
     setIsSubmitting(false);
-    router.push('/my-listings');
+    router.push("/my-listings");
   };
 
   return (
@@ -107,11 +105,11 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
               Make changes to your device listing.
             </p>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Pencil className="text-accent"/>
+                <Pencil className="text-accent" />
                 Editing: {listing.title}
               </CardTitle>
               <CardDescription>
@@ -122,7 +120,10 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
-                  <Select defaultValue={listing.brand} onValueChange={(value) => form.setValue("brand", value)}>
+                  <Select
+                    defaultValue={listing.brand}
+                    onValueChange={(value) => form.setValue("brand", value)}
+                  >
                     <SelectTrigger id="brand">
                       <SelectValue placeholder="Select Brand" />
                     </SelectTrigger>
@@ -140,16 +141,23 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
                   <Label htmlFor="model">Model</Label>
                   <Input id="model" {...form.register("model")} />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="ram">RAM</Label>
-                  <Select defaultValue={String(listing.variant.ram)} onValueChange={(value) => form.setValue("ram", Number(value))}>
+                  <Select
+                    defaultValue={String(listing.variant.ram)}
+                    onValueChange={(value) =>
+                      form.setValue("ram", Number(value))
+                    }
+                  >
                     <SelectTrigger id="ram">
                       <SelectValue placeholder="Select RAM" />
                     </SelectTrigger>
                     <SelectContent>
                       {RAM_OPTIONS.map((ram) => (
-                        <SelectItem key={ram} value={String(ram)}>{ram} GB</SelectItem>
+                        <SelectItem key={ram} value={String(ram)}>
+                          {ram} GB
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -157,14 +165,21 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
 
                 <div className="space-y-2">
                   <Label htmlFor="storage">Storage</Label>
-                  <Select defaultValue={String(listing.variant.storage)} onValueChange={(value) => form.setValue("storage", Number(value))}>
+                  <Select
+                    defaultValue={String(listing.variant.storage)}
+                    onValueChange={(value) =>
+                      form.setValue("storage", Number(value))
+                    }
+                  >
                     <SelectTrigger id="storage">
                       <SelectValue placeholder="Select Storage" />
                     </SelectTrigger>
                     <SelectContent>
                       {STORAGE_OPTIONS.map((storage) => (
                         <SelectItem key={storage} value={String(storage)}>
-                          {storage >= 1024 ? `${storage / 1024} TB` : `${storage} GB`}
+                          {storage >= 1024
+                            ? `${storage / 1024} TB`
+                            : `${storage} GB`}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -173,13 +188,20 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
 
                 <div className="space-y-2">
                   <Label htmlFor="condition">Condition</Label>
-                  <Select defaultValue={listing.condition} onValueChange={(value) => form.setValue("condition", value as any)}>
+                  <Select
+                    defaultValue={listing.condition}
+                    onValueChange={(value) =>
+                      form.setValue("condition", value as any)
+                    }
+                  >
                     <SelectTrigger id="condition">
                       <SelectValue placeholder="Select Condition" />
                     </SelectTrigger>
                     <SelectContent>
                       {CONDITIONS.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -187,19 +209,38 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
 
                 <div className="space-y-2">
                   <Label htmlFor="purchaseYear">Purchase Year</Label>
-                  <Input id="purchaseYear" type="number" {...form.register("purchaseYear")} />
+                  <Input
+                    id="purchaseYear"
+                    type="number"
+                    {...form.register("purchaseYear")}
+                  />
                 </div>
-                
+
                 <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Combobox
-                        options={locationOptions}
-                        value={form.watch('location')}
-                        onChange={(value) => form.setValue('location', value)}
-                        placeholder="Select your city..."
-                        searchPlaceholder="Search for a city..."
-                    />
-                    {form.formState.errors.location && <p className="text-sm text-destructive">{form.formState.errors.location.message}</p>}
+                  <Label htmlFor="location">Location</Label>
+                  <Controller
+                    name="location"
+                    control={form.control}
+                    render={({ field }) => (
+                      <PlacesAutocomplete
+                        id="edit-location"
+                        onPlaceSelect={(place) => {
+                          if (place) {
+                            const { address, ...locationData } = place;
+                            field.onChange(locationData);
+                          } else {
+                            field.onChange(null);
+                          }
+                        }}
+                        defaultValue={field.value ? `${field.value.city}, ${field.value.state}` : ''}
+                      />
+                    )}
+                  />
+                   {form.formState.errors.location && (
+                    <p className="text-sm text-destructive">
+                      {(form.formState.errors.location as any).message}
+                    </p>
+                  )}
                 </div>
               </CardContent>
               <CardFooter>

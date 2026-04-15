@@ -15,8 +15,8 @@ import { Slider } from "@/components/ui/slider";
 import { BRANDS, CONDITIONS, RAM_OPTIONS, STORAGE_OPTIONS } from "@/lib/types";
 import { MapPin } from "lucide-react";
 import type { FilterState } from "@/app/listings/page";
-import { Combobox } from "@/components/ui/combobox";
-import { locations, type Location } from "@/lib/locations";
+import PlacesAutocomplete from "./ui/places-autocomplete";
+import type { Place } from "./ui/places-autocomplete";
 
 interface FiltersProps {
   filters: FilterState;
@@ -27,14 +27,14 @@ interface FiltersProps {
 }
 
 export function Filters({ filters, setFilters, className }: FiltersProps) {
-  const locationOptions = locations.map((loc) => ({
-    value: loc.name,
-    label: `${loc.name}, ${loc.state}`,
-  }));
-
-  const handleLocationChange = (cityName: string) => {
-    const newLocation = locations.find((l) => l.name === cityName) || null;
-    setFilters((prev) => ({ ...prev, location: newLocation }));
+  
+  const handlePlaceSelect = (place: Place | null) => {
+    if (place) {
+      const { address, ...locationData } = place;
+      setFilters((prev) => ({ ...prev, location: locationData }));
+    } else {
+      setFilters((prev) => ({ ...prev, location: null }));
+    }
   };
 
   const handleReset = () => {
@@ -106,13 +106,10 @@ export function Filters({ filters, setFilters, className }: FiltersProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Combobox
-            options={locationOptions}
-            value={filters.location?.name}
-            onChange={handleLocationChange}
-            placeholder="Select a city..."
-            searchPlaceholder="Search city..."
-            noResultsMessage="City not found."
+          <PlacesAutocomplete
+            id="filter-location"
+            onPlaceSelect={handlePlaceSelect}
+            defaultValue={filters.location ? `${filters.location.city}, ${filters.location.state}` : ''}
           />
 
           <div className="space-y-2 pt-2">
