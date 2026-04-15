@@ -1,38 +1,58 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { listings } from "@/lib/data";
+import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ClientTime } from "@/components/client-date";
+import { useCollection, useFirestore, useUser } from "@/firebase";
+import { collection, query, where, orderBy } from "firebase/firestore";
+import { Skeleton } from "@/components/ui/skeleton";
+import { MessageSquare } from "lucide-react";
+
+interface Conversation {
+  id: string;
+  listingId: string;
+  buyerId: string;
+  sellerId: string;
+  participants: string[];
+  lastMessageText: string;
+  lastMessageAt: {
+    seconds: number;
+    nanoseconds: number;
+  };
+  listingTitle: string;
+  listingPrice: number;
+  listingImage: string;
+  buyerName: string;
+  buyerAvatar: string;
+  sellerName: string;
+  sellerAvatar: string;
+}
 
 export default function MessagesPage() {
-  const conversations = [
-    {
-      id: "conv-1",
-      listing: listings[0],
-      otherUser: listings[0].seller,
-      lastMessage: "Is this still available?",
-      unreadCount: 1,
-      timestamp: "2024-07-21T10:00:00Z",
-    },
-    {
-      id: "conv-2",
-      listing: listings[2],
-      otherUser: listings[2].seller,
-      lastMessage: "Can you do 35k?",
-      unreadCount: 0,
-      timestamp: "2024-07-20T18:30:00Z",
-    },
-    {
-      id: "conv-3",
-      listing: listings[3],
-      otherUser: listings[3].seller,
-      lastMessage: "Okay, sounds good. Let's meet tomorrow.",
-      unreadCount: 0,
-      timestamp: "2024-07-19T11:45:00Z",
-    },
-  ];
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  const conversationsQuery = user
+    ? query(
+        collection(firestore, "conversations"),
+        where("participants", "array-contains", user.uid),
+        orderBy("lastMessageAt", "desc")
+      )
+    : null;
+
+  const { data: conversations, loading } = useCollection<Conversation>(conversationsQuery);
+  
+  const getOtherUser = (conv: Conversation) => {
+      if (!user) return { name: 'User', avatar: '' };
+      const isBuyer = user.uid === conv.buyerId;
+      return {
+          name: isBuyer ? conv.sellerName : conv.buyerName,
+          avatar: isBuyer ? conv.sellerAvatar : conv.buyerAvatar
+      }
+  }
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-background">
@@ -50,20 +70,43 @@ export default function MessagesPage() {
           <Card>
             <CardContent className="p-0">
               <div className="divide-y">
-                {conversations.map((conv) => (
+                {loading && (
+                    Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="flex items-center gap-4 p-4">
+                            <Skeleton className="h-14 w-14 rounded-full" />
+                            <div className="flex-1 space-y-2">
+                                <Skeleton className="h-4 w-1/4" />
+                                <Skeleton className="h-4 w-2/4" />
+                                <Skeleton className="h-4 w-3/4" />
+                            </div>
+                        </div>
+                    ))
+                )}
+                {!loading && conversations?.length === 0 && (
+                    <div className="text-center py-20">
+                        <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <h2 className="mt-4 text-xl font-semibold">No messages yet</h2>
+                        <p className="text-muted-foreground mt-1">Start a conversation on a listing page.</p>
+                    </div>
+                )}
+                {conversations?.map((conv) => {
+                    const otherUser = getOtherUser(conv);
+                    const lastMessageDate = new Date(conv.lastMessageAt.seconds * 1000);
+                  
+                  return (
                   <Link href={`/messages/${conv.id}`} key={conv.id}>
                     <div
                       className="flex items-center gap-4 p-4 hover:bg-muted/50 cursor-pointer"
                     >
                       <Avatar className="h-14 w-14">
-                        <AvatarImage src={conv.otherUser.avatar} />
-                        <AvatarFallback>{conv.otherUser.name[0]}</AvatarFallback>
+                        <AvatarImage src={otherUser.avatar} />
+                        <AvatarFallback>{otherUser.name?.[0]}</AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
-                          <p className="font-semibold">{conv.otherUser.name}</p>
+                          <p className="font-semibold">{otherUser.name}</p>
                           <ClientTime
-                            date={conv.timestamp}
+                            date={lastMessageDate}
                             className="text-xs text-muted-foreground"
                             options={{
                               hour: '2-digit',
@@ -71,19 +114,19 @@ export default function MessagesPage() {
                             }}
                           />
                         </div>
-                        <p className="text-sm text-muted-foreground font-medium">{conv.listing.title}</p>
+                        <p className="text-sm text-muted-foreground font-medium">{conv.listingTitle}</p>
                         <div className="flex justify-between items-end">
-                          <p className="text-sm text-muted-foreground truncate max-w-xs">{conv.lastMessage}</p>
-                          {conv.unreadCount > 0 && (
+                          <p className="text-sm text-muted-foreground truncate max-w-xs">{conv.lastMessageText || '...'}</p>
+                          {/* {conv.unreadCount > 0 && (
                             <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
                               {conv.unreadCount}
                             </div>
-                          )}
+                          )} */}
                         </div>
                       </div>
                     </div>
                   </Link>
-                ))}
+                )})}
               </div>
             </CardContent>
           </Card>

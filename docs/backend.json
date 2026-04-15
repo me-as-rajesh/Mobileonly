@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Represents a user's public and private profile data.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID." },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "avatar": { "type": "string", "format": "uri" },
+        "role": { "type": "string", "enum": ["buyer", "seller", "both"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role", "createdAt"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Metadata for a chat conversation between a buyer and a seller about a listing.",
+      "type": "object",
+      "properties": {
+        "listingId": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessageText": { "type": "string" },
+        "lastMessageAt": { "type": "string", "format": "date-time" },
+        "listingTitle": { "type": "string" },
+        "listingPrice": { "type": "number" },
+        "listingImage": { "type": "string", "format": "uri" },
+        "buyerName": { "type": "string" },
+        "buyerAvatar": { "type": "string", "format": "uri" },
+        "sellerName": { "type": "string" },
+        "sellerAvatar": { "type": "string", "format": "uri" }
+      },
+       "required": ["listingId", "buyerId", "sellerId", "participants", "lastMessageAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "An individual chat message within a conversation.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "object" }
+      },
+      "required": ["senderId", "text", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com", "password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores public user profile data."
+    },
+    "/conversations/{conversationId}": {
+      "schema": { "$ref": "#/entities/Conversation" },
+      "description": "Stores metadata for each conversation."
+    },
+    "/conversations/{conversationId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Stores all messages for a specific conversation."
+    }
+  }
+}

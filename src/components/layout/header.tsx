@@ -28,24 +28,43 @@ import {
   History,
   Shield,
   Settings,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/firebase";
+import { signOut } from "firebase/auth";
+import { useAuth } from "@/firebase";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Skeleton } from "../ui/skeleton";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/listings", label: "Browse", icon: Search },
-  { href: "/favorites", label: "Favorites", icon: Heart },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
 ];
+
+const authenticatedNavItems = [
+    ...navItems,
+    { href: "/favorites", label: "Favorites", icon: Heart },
+    { href: "/messages", label: "Messages", icon: MessageSquare },
+]
 
 export function Header() {
   const pathname = usePathname();
+  const { user, profile, loading } = useUser();
+  const auth = useAuth();
+  
+  const currentNavItems = user ? authenticatedNavItems : navItems;
 
   // Do not render header on admin routes
   if (pathname.startsWith('/admin')) {
     return null;
+  }
+
+  const handleLogout = () => {
+    signOut(auth);
   }
 
   return (
@@ -57,7 +76,7 @@ export function Header() {
         >
           <Logo />
         </Link>
-        {navItems.map((item) => (
+        {currentNavItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -87,7 +106,7 @@ export function Header() {
             >
               <Logo />
             </Link>
-            {navItems.map((item) => (
+            {currentNavItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -116,40 +135,53 @@ export function Header() {
             />
           </div>
         </form>
-        <Link href="/sell" passHref>
-          <Button className="hidden sm:inline-flex">Sell Now</Button>
-        </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-                <Link href="/profile/seller-1" className="w-full flex items-center"><CircleUser className="mr-2"/>Profile</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-                <Link href="/my-listings" className="w-full flex items-center"><Package className="mr-2"/>My Listings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-                <Link href="/recently-viewed" className="w-full flex items-center"><History className="mr-2"/>Recently Viewed</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-                <Link href="/settings" className="w-full flex items-center"><Settings className="mr-2"/>Settings</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {/* This would be conditional for admin role */}
-            <DropdownMenuItem asChild>
-                <Link href="/admin" className="w-full flex items-center"><Shield className="mr-2"/>Admin Panel</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {user && (
+            <Link href="/sell" passHref>
+                <Button className="hidden sm:inline-flex">Sell Now</Button>
+            </Link>
+        )}
+        {loading ? (
+            <Skeleton className="h-10 w-10 rounded-full" />
+        ) : user && profile ? (
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                <Avatar>
+                    <AvatarImage src={profile.avatar!} alt={profile.name!} />
+                    <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="sr-only">Toggle user menu</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{profile.name}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href={`/profile/${user.uid}`} className="w-full flex items-center"><CircleUser className="mr-2"/>Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/my-listings" className="w-full flex items-center"><Package className="mr-2"/>My Listings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/recently-viewed" className="w-full flex items-center"><History className="mr-2"/>Recently Viewed</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/settings" className="w-full flex items-center"><Settings className="mr-2"/>Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {/* This would be conditional for admin role */}
+                <DropdownMenuItem asChild>
+                    <Link href="/admin" className="w-full flex items-center"><Shield className="mr-2"/>Admin Panel</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2"/>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        ) : (
+            <Link href="/login" passHref>
+                <Button variant="outline"><LogIn className="mr-2"/>Login</Button>
+            </Link>
+        )}
       </div>
     </header>
   );

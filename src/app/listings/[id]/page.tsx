@@ -1,4 +1,6 @@
-import { notFound } from "next/navigation";
+'use client';
+
+import { notFound, useRouter } from "next/navigation";
 import Image from "next/image";
 import { listings } from "@/lib/data";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -31,9 +33,103 @@ import {
   Star,
   Smartphone,
   CalendarDays,
+  Loader2,
 } from "lucide-react";
 import type { Listing } from "@/lib/types";
 import { ClientDate } from "@/components/client-date";
+import { useUser } from "@/firebase";
+import { useToast } from "@/hooks/use-toast";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { useFirestore } from "@/firebase";
+import { useState } from "react";
+
+function StartChatButton({ listing }: { listing: Listing }) {
+    const { user, profile } = useUser();
+    const router = useRouter();
+    const { toast } = useToast();
+    const firestore = useFirestore();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleStartChat = async () => {
+        if (!user || !profile) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Required',
+                description: 'Please log in to chat with the seller.',
+            });
+            router.push('/login');
+            return;
+        }
+
+        if (user.uid === listing.seller.id) {
+             toast({
+                variant: 'destructive',
+                title: 'This is your listing',
+                description: 'You cannot start a chat with yourself.',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const conversationId = [listing.id, user.uid, listing.seller.id].sort().join('_');
+            const conversationRef = collection(firestore, 'conversations');
+
+            const q = query(
+              conversationRef,
+              where('listingId', '==', listing.id),
+              where('buyerId', '==', user.uid)
+            );
+            
+            const existingConvs = await getDocs(q);
+
+            if (!existingConvs.empty) {
+                // Conversation already exists
+                router.push(`/messages/${existingConvs.docs[0].id}`);
+            } else {
+                // Create a new conversation
+                const sellerProfile = listing.seller;
+                
+                await addDoc(conversationRef, {
+                    id: conversationId,
+                    listingId: listing.id,
+                    buyerId: user.uid,
+                    sellerId: listing.seller.id,
+                    participants: [user.uid, listing.seller.id],
+                    createdAt: serverTimestamp(),
+                    lastMessageAt: serverTimestamp(),
+                    lastMessageText: '',
+                    listingTitle: listing.title,
+                    listingPrice: listing.price,
+                    listingImage: PlaceHolderImages.find(p => p.id === listing.images[0])?.imageUrl,
+                    buyerName: profile.name,
+                    buyerAvatar: profile.avatar,
+                    sellerName: sellerProfile.name,
+                    sellerAvatar: sellerProfile.avatar,
+                });
+                router.push(`/messages/${conversationId}`);
+            }
+
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Failed to start chat',
+                description: error.message,
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <Button size="lg" onClick={handleStartChat} disabled={isLoading}>
+            {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <MessageSquare className="mr-2 h-5 w-5" />}
+            Chat with Seller
+        </Button>
+    )
+}
+
 
 export default function ListingDetailPage({
   params,
@@ -193,10 +289,7 @@ export default function ListingDetailPage({
                 <Heart className="mr-2 h-5 w-5" />
                 Favorite
             </Button>
-            <Button size="lg">
-                <MessageSquare className="mr-2 h-5 w-5" />
-                Chat with Seller
-            </Button>
+            <StartChatButton listing={listing} />
           </div>
         </div>
       </div>
