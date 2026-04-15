@@ -1,4 +1,3 @@
-
 'use client';
 
 import { notFound, useRouter } from "next/navigation";
@@ -126,13 +125,12 @@ function StartChatButton({ listing }: { listing: Listing }) {
     )
 }
 
-
-export default function ListingDetailPage({
-  params: { id },
-}: {
+type PageProps = {
   params: { id: string };
-}) {
-  const listing = listings.find((l) => l.id === id);
+};
+
+export default function ListingDetailPage({ params }: PageProps) {
+  const listing = listings.find((l) => l.id === params.id);
 
   if (!listing) {
     notFound();
@@ -304,5 +302,4 @@ function SpecItem({ icon: Icon, label, value }: { icon: React.ElementType, label
         </div>
     )
 }
-
     
