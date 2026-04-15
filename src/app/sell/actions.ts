@@ -2,12 +2,12 @@
 
 import {
   suggestListingPrice,
-  type SuggestListingPriceInput as PriceSuggestionInput,
-  type SuggestListingPriceOutput as PriceSuggestion,
+  type SuggestListingPriceInput,
+  type SuggestListingPriceOutput,
 } from "@/ai/flows/suggest-listing-price";
 import { z } from "zod";
 
-export type { PriceSuggestion, PriceSuggestionInput };
+export type { SuggestListingPriceOutput as PriceSuggestion, SuggestListingPriceInput };
 
 const PriceSuggestionSchema = z.object({
   brand: z.string(),
@@ -19,8 +19,8 @@ const PriceSuggestionSchema = z.object({
 });
 
 export async function getSuggestedPrice(
-  input: PriceSuggestionInput
-): Promise<{ data: PriceSuggestion | null; error: string | null }> {
+  input: SuggestListingPriceInput
+): Promise<{ data: SuggestListingPriceOutput | null; error: string | null }> {
   const parsed = PriceSuggestionSchema.safeParse(input);
   if (!parsed.success) {
     return { data: null, error: "Invalid input." };
