@@ -32,11 +32,7 @@ export default function RootLayout({
           spaceGrotesk.variable
         )}
       >
-        <div className="relative flex min-h-dvh flex-col bg-background">
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </div>
+        {children}
         <Toaster />
       </body>
     </html>

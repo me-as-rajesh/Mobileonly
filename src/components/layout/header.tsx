@@ -23,9 +23,10 @@ import {
   Menu,
   MessageSquare,
   Package,
-  Package2,
   Search,
-  Users,
+  History,
+  Shield,
+  Settings,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { usePathname } from "next/navigation";
@@ -40,6 +41,11 @@ const navItems = [
 
 export function Header() {
   const pathname = usePathname();
+
+  // Do not render header on admin routes
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
@@ -122,9 +128,23 @@ export function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>My Listings</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+                <Link href="/profile/seller-1" className="w-full flex items-center"><CircleUser className="mr-2"/>Profile</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+                <Link href="/my-listings" className="w-full flex items-center"><Package className="mr-2"/>My Listings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+                <Link href="/recently-viewed" className="w-full flex items-center"><History className="mr-2"/>Recently Viewed</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+                <Link href="#" className="w-full flex items-center"><Settings className="mr-2"/>Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {/* This would be conditional for admin role */}
+            <DropdownMenuItem asChild>
+                <Link href="/admin" className="w-full flex items-center"><Shield className="mr-2"/>Admin Panel</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Logout</DropdownMenuItem>
           </DropdownMenuContent>
