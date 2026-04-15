@@ -33,6 +33,7 @@ import {
   CalendarDays,
 } from "lucide-react";
 import type { Listing } from "@/lib/types";
+import { ClientDate } from "@/components/client-date";
 
 export default function ListingDetailPage({
   params,
@@ -112,11 +113,14 @@ export default function ListingDetailPage({
             </div>
             <p className="text-muted-foreground">
               Posted in {location.city}, {location.state} on{" "}
-              {new Date(createdAt).toLocaleDateString("en-IN", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
+              <ClientDate
+                date={createdAt}
+                options={{
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }}
+              />
             </p>
           </div>
 

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Check, X } from "lucide-react";
 import Link from "next/link";
+import { ClientDate } from "@/components/client-date";
 
 const reports = [
     { id: 'rep-1', targetType: 'listing', targetId: '3', reason: 'scam', reporter: 'Samantha B.', status: 'pending', createdAt: '2024-07-20T10:00:00Z' },
@@ -55,7 +56,9 @@ export default function AdminReportsPage() {
                     {report.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{new Date(report.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <ClientDate date={report.createdAt} options={{ day: 'numeric', month: 'short', year: 'numeric'}} />
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { ClientDate } from "./client-date";
 
 type ListingCardProps = {
   listing: Listing;
@@ -82,12 +83,14 @@ export function ListingCard({ listing, className }: ListingCardProps) {
           <p className="text-2xl font-bold text-primary">
             ₹{listing.price.toLocaleString("en-IN")}
           </p>
-          <span className="text-xs text-muted-foreground">
-            {new Date(listing.createdAt).toLocaleDateString("en-IN", {
+          <ClientDate
+            date={listing.createdAt}
+            options={{
               day: "numeric",
               month: "short",
-            })}
-          </span>
+            }}
+            className="text-xs text-muted-foreground"
+          />
         </div>
       </CardFooter>
     </Card>

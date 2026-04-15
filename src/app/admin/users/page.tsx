@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, UserX, UserCheck } from "lucide-react";
 import Link from "next/link";
+import { ClientDate } from "@/components/client-date";
 
 const users = [
   { id: 'seller-1', name: 'Alex R.', email: 'alex@example.com', role: 'seller', status: 'Active', isVerified: true, joined: '2023-01-15' },
@@ -58,7 +59,9 @@ export default function AdminUsersPage() {
                 <TableCell>
                     {user.isVerified ? <Badge>Yes</Badge> : <Badge variant="outline">No</Badge>}
                 </TableCell>
-                <TableCell>{new Date(user.joined).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <ClientDate date={user.joined} options={{ day: 'numeric', month: 'short', year: 'numeric' }} />
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

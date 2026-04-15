@@ -18,6 +18,7 @@ import {
 import { MoreHorizontal, Trash2, ShieldCheck } from "lucide-react";
 import { listings } from "@/lib/data";
 import Link from "next/link";
+import { ClientDate } from "@/components/client-date";
 
 export default function AdminListingsPage() {
     const allListings = [...listings];
@@ -51,7 +52,9 @@ export default function AdminListingsPage() {
                     {listing.status || 'active'}
                   </Badge>
                 </TableCell>
-                <TableCell>{new Date(listing.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <ClientDate date={listing.createdAt} options={{ day: 'numeric', month: 'short', year: 'numeric'}} />
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

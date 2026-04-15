@@ -4,6 +4,7 @@ import { listings } from "@/lib/data";
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { ClientTime } from "@/components/client-date";
 
 export default function MessagesPage() {
   const conversations = [
@@ -61,12 +62,14 @@ export default function MessagesPage() {
                       <div className="flex-1">
                         <div className="flex justify-between items-start">
                           <p className="font-semibold">{conv.otherUser.name}</p>
-                          <time className="text-xs text-muted-foreground">
-                            {new Date(conv.timestamp).toLocaleTimeString("en-IN", {
+                          <ClientTime
+                            date={conv.timestamp}
+                            className="text-xs text-muted-foreground"
+                            options={{
                               hour: '2-digit',
                               minute: '2-digit'
-                            })}
-                          </time>
+                            }}
+                          />
                         </div>
                         <p className="text-sm text-muted-foreground font-medium">{conv.listing.title}</p>
                         <div className="flex justify-between items-end">
