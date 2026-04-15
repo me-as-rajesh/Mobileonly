@@ -7,7 +7,7 @@ import { z } from "zod";
 import {
   getSuggestedPrice,
   type PriceSuggestion,
-  type PriceSuggestionInput,
+  type SuggestListingPriceInput,
 } from "./actions";
 
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Combobox } from "@/components/ui/combobox";
+import { locationOptions } from "@/lib/locations";
 
 const CreateListingSchema = z.object({
   brand: z.string().min(1, "Brand is required"),
@@ -54,6 +56,7 @@ const CreateListingSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters").max(100),
   description: z.string().min(20, "Description must be at least 20 characters").max(1000),
   price: z.coerce.number().min(1, "Price is required"),
+  location: z.string().min(1, "Location is required"),
   images: z.array(z.string().url()).min(1, "At least one image is required").max(8, "You can upload a maximum of 8 images."),
 });
 
@@ -263,6 +266,18 @@ export default function SellPage() {
               <Input id="purchaseYear" type="number" placeholder="e.g., 2022" {...form.register("purchaseYear")} />
                {form.formState.errors.purchaseYear && <p className="text-sm text-destructive">{form.formState.errors.purchaseYear.message}</p>}
             </div>
+
+             <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="location">Location</Label>
+                <Combobox
+                    options={locationOptions}
+                    value={form.watch('location')}
+                    onChange={(value) => form.setValue('location', value)}
+                    placeholder="Select your city..."
+                    searchPlaceholder="Search for a city..."
+                />
+                 {form.formState.errors.location && <p className="text-sm text-destructive">{form.formState.errors.location.message}</p>}
+            </div>
             
             <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>
@@ -285,7 +300,7 @@ export default function SellPage() {
                 <div className="grid grid-cols-4 gap-4 mt-4">
                     {form.watch('images').map(url => (
                         <div key={url} className="relative group aspect-square">
-                            <Image src={url} alt="Uploaded image" layout="fill" className="object-cover rounded-md"/>
+                            <Image src={url} alt="Uploaded image" fill className="object-cover rounded-md"/>
                              <Button variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveImage(url)}>
                                 <X className="h-4 w-4"/>
                             </Button>

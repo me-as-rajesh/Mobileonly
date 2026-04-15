@@ -5,7 +5,7 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  type PriceSuggestionInput,
+  type SuggestListingPriceInput,
 } from "@/app/sell/actions";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ import { listings } from "@/lib/data";
 import { notFound, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { Combobox } from "@/components/ui/combobox";
+import { locationOptions } from "@/lib/locations";
 
 
 const EditListingSchema = z.object({
@@ -50,7 +52,11 @@ const EditListingSchema = z.object({
     .number()
     .min(2010, "Invalid year")
     .max(new Date().getFullYear(), "Year cannot be in the future"),
+  location: z.string().min(1, "Location is required"),
 });
+
+// The form schema is a subset of the listing creation schema
+type EditListingInput = Omit<SuggestListingPriceInput, 'location'> & { location: string };
 
 export default function EditListingPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -63,7 +69,7 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm<PriceSuggestionInput>({
+  const form = useForm<EditListingInput>({
     resolver: zodResolver(EditListingSchema),
     defaultValues: {
       brand: listing.brand,
@@ -72,10 +78,11 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
       storage: listing.variant.storage,
       condition: listing.condition,
       purchaseYear: listing.purchaseYear,
+      location: listing.location.city,
     },
   });
 
-  const onSubmit: SubmitHandler<PriceSuggestionInput> = async (data) => {
+  const onSubmit: SubmitHandler<EditListingInput> = async (data) => {
     setIsSubmitting(true);
     console.log("Updated data:", data);
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -181,6 +188,18 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
                 <div className="space-y-2">
                   <Label htmlFor="purchaseYear">Purchase Year</Label>
                   <Input id="purchaseYear" type="number" {...form.register("purchaseYear")} />
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Combobox
+                        options={locationOptions}
+                        value={form.watch('location')}
+                        onChange={(value) => form.setValue('location', value)}
+                        placeholder="Select your city..."
+                        searchPlaceholder="Search for a city..."
+                    />
+                    {form.formState.errors.location && <p className="text-sm text-destructive">{form.formState.errors.location.message}</p>}
                 </div>
               </CardContent>
               <CardFooter>

@@ -27,6 +27,8 @@ export type Listing = {
   location: {
     city: string;
     state: string;
+    lat: number;
+    lon: number;
   };
   purchaseYear?: number;
   seller: Seller;
@@ -34,6 +36,7 @@ export type Listing = {
   viewCount: number;
   favoriteCount: number;
   createdAt: string;
+  status?: 'active' | 'sold' | 'flagged';
 };
 
 export const BRANDS = [
