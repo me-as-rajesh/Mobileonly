@@ -111,7 +111,7 @@ export default function ListingDetailPage({
                 <Badge variant="secondary">Negotiable</Badge>
               )}
             </div>
-            <p className="text-muted-foreground">
+            <div className="text-muted-foreground">
               Posted in {location.city}, {location.state} on{" "}
               <ClientDate
                 date={createdAt}
@@ -121,7 +121,7 @@ export default function ListingDetailPage({
                   day: "numeric",
                 }}
               />
-            </p>
+            </div>
           </div>
 
           <Card>
