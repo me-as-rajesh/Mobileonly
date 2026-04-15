@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -138,7 +139,7 @@ export function Header() {
                 <Link href="/recently-viewed" className="w-full flex items-center"><History className="mr-2"/>Recently Viewed</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-                <Link href="#" className="w-full flex items-center"><Settings className="mr-2"/>Settings</Link>
+                <Link href="/settings" className="w-full flex items-center"><Settings className="mr-2"/>Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             {/* This would be conditional for admin role */}
