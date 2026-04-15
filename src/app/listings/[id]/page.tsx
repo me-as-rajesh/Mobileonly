@@ -1,3 +1,4 @@
+
 'use client';
 
 import { notFound, useRouter } from "next/navigation";
@@ -127,11 +128,10 @@ function StartChatButton({ listing }: { listing: Listing }) {
 
 
 export default function ListingDetailPage({
-  params,
+  params: { id },
 }: {
   params: { id: string };
 }) {
-  const { id } = params;
   const listing = listings.find((l) => l.id === id);
 
   if (!listing) {
@@ -304,3 +304,5 @@ function SpecItem({ icon: Icon, label, value }: { icon: React.ElementType, label
         </div>
     )
 }
+
+    
