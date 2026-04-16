@@ -36,7 +36,7 @@ import { listings } from "@/lib/data";
 import { notFound, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import locationData from '@/states-and-districts.json';
+import locationData from '../../../../states-and-districts.json';
 import { Textarea } from "@/components/ui/textarea";
 
 const states = locationData.states.map(s => ({ name: s.state, districts: s.districts }));

@@ -40,7 +40,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import locationData from '@/states-and-districts.json';
+import locationData from '../../states-and-districts.json';
 
 const states = locationData.states.map(s => ({ name: s.state, districts: s.districts }));
 

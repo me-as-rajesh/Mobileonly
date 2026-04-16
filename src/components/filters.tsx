@@ -17,7 +17,7 @@ import { BRANDS, CONDITIONS, RAM_OPTIONS, STORAGE_OPTIONS } from "@/lib/types";
 import { MapPin } from "lucide-react";
 import type { FilterState } from "@/app/listings/client";
 import { Combobox } from "@/components/ui/combobox";
-import locationData from '@/states-and-districts.json';
+import locationData from '../../states-and-districts.json';
 
 const allDistricts: { label: string; value: string }[] = locationData.states.flatMap(s => s.districts.map(d => ({ label: `${d}, ${s.state}`, value: d })) );
 
