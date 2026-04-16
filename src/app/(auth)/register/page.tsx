@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { createUserProfile } from "@/lib/firestore";
+import { doc, getDoc } from 'firebase/firestore';
 
 const RegisterSchema = z.object({
   name: z.string().min(1, "Full Name is required"),
@@ -61,7 +62,7 @@ export default function RegisterPage() {
       await createUserProfile(firestore, userCredential.user, data.role, data.name);
       
       toast({ title: "Account Created", description: "You have been successfully registered." });
-      router.push("/");
+      router.push(`/profile/${userCredential.user.uid}`);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -78,12 +79,15 @@ export default function RegisterPage() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      // For Google sign-in, we can assume a role or ask them to set it on first login.
-      // For now, default to 'buyer'. We can check if user is new and create profile.
-      createUserProfile(firestore, result.user, 'buyer', result.user.displayName || 'New User');
+      
+      const userRef = doc(firestore, "users", result.user.uid);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        await createUserProfile(firestore, result.user, 'buyer', result.user.displayName || 'New User');
+      }
 
       toast({ title: "Success", description: "Logged in successfully." });
-      router.push("/");
+      router.push(`/profile/${result.user.uid}`);
     } catch (error: any) {
       toast({
         variant: "destructive",

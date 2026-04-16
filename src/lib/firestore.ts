@@ -9,7 +9,7 @@ import type { UserProfile } from '@/firebase';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-export function createUserProfile(
+export async function createUserProfile(
   db: Firestore,
   user: User,
   role: 'buyer' | 'seller' | 'both',
@@ -25,12 +25,15 @@ export function createUserProfile(
     createdAt: new Date().toISOString(),
   };
 
-  setDoc(userRef, data).catch(async (serverError) => {
-    const permissionError = new FirestorePermissionError({
-      path: userRef.path,
-      operation: 'create',
-      requestResourceData: data,
-    });
-    errorEmitter.emit('permission-error', permissionError);
-  });
+  try {
+    await setDoc(userRef, data);
+  } catch (serverError) {
+      const permissionError = new FirestorePermissionError({
+        path: userRef.path,
+        operation: 'create',
+        requestResourceData: data,
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      throw serverError;
+  }
 }
