@@ -40,7 +40,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import locationData from '../../states-and-districts.json';
+import locationData from '../../../states-and-districts.json';
 
 const states = locationData.states.map(s => ({ name: s.state, districts: s.districts }));
 
@@ -159,6 +159,12 @@ export default function SellPage() {
     const uploadedUrls = form.getValues('images');
 
     for (const file of Array.from(files)) {
+      const fileBuffer = await file.arrayBuffer();
+      const mime = file.type;
+      const encoding = 'base64';
+      const base64Data = Buffer.from(fileBuffer).toString('base64');
+      const fileUri = 'data:' + mime + ';' + encoding + ',' + base64Data;
+      
       const formData = new FormData();
       formData.append('file', file);
       try {
