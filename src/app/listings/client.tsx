@@ -12,8 +12,6 @@ import {
 } from "@/components/ui/drawer";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getDistance } from "@/lib/utils";
-import type { Location } from "@/lib/types";
 import { useSearchParams, useRouter } from "next/navigation";
 
 export interface FilterState {
@@ -22,8 +20,7 @@ export interface FilterState {
   condition: string;
   ram: number | null;
   storage: number | null;
-  location: Location | null;
-  distance: number;
+  district: string;
 }
 
 export function ListingsClient() {
@@ -37,8 +34,7 @@ export function ListingsClient() {
     condition: "all",
     ram: null,
     storage: null,
-    location: null,
-    distance: 500,
+    district: 'all',
   });
 
   const filteredListings = React.useMemo(() => {
@@ -77,17 +73,9 @@ export function ListingsClient() {
       if (filters.storage && listing.variant.storage !== filters.storage) {
         return false;
       }
-      // Location
-      if (filters.location) {
-        const distance = getDistance(
-          filters.location.lat,
-          filters.location.lon,
-          listing.location.lat,
-          listing.location.lon
-        );
-        if (distance > filters.distance) {
-          return false;
-        }
+      // District
+      if (filters.district !== "all" && listing.location.district !== filters.district) {
+        return false;
       }
       return true;
     });

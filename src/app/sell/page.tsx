@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, type SubmitHandler, Controller } from "react-hook-form";
+import { useForm, type SubmitHandler, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
@@ -34,15 +34,15 @@ import {
   CONDITIONS,
   RAM_OPTIONS,
   STORAGE_OPTIONS,
-  type Location,
 } from "@/lib/types";
-import { Bot, Check, Loader2, Sparkles, UploadCloud, X, Image as ImageIcon } from "lucide-react";
+import { Bot, Check, Loader2, Sparkles, UploadCloud, X } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import PlacesAutocomplete from "@/components/ui/places-autocomplete";
-import type { Place } from "@/components/ui/places-autocomplete";
+import locationData from '@/states-and-districts.json';
+
+const states = locationData.states.map(s => ({ name: s.state, districts: s.districts }));
 
 const CreateListingSchema = z.object({
   brand: z.string().min(1, "Brand is required"),
@@ -57,8 +57,10 @@ const CreateListingSchema = z.object({
   title: z.string().min(10, "Title must be at least 10 characters").max(100),
   description: z.string().min(20, "Description must be at least 20 characters").max(1000),
   price: z.coerce.number().min(1, "Price is required"),
-  location: z.custom<Location>().nullable().refine(val => val !== null, {
-    message: "Please select a valid location from the suggestions.",
+  location: z.object({
+    state: z.string().min(1, "State is required"),
+    district: z.string().min(1, "District is required"),
+    address: z.string().min(10, "Address must be at least 10 characters long"),
   }),
   images: z.array(z.string().url()).min(1, "At least one image is required").max(8, "You can upload a maximum of 8 images."),
 });
@@ -71,14 +73,34 @@ export default function SellPage() {
   const [priceSuggestion, setPriceSuggestion] = React.useState<PriceSuggestion | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const { toast } = useToast();
+  const [districts, setDistricts] = React.useState<string[]>([]);
 
   const form = useForm<CreateListingInput>({
     resolver: zodResolver(CreateListingSchema),
     defaultValues: {
       images: [],
-      location: null,
+      location: {
+        state: '',
+        district: '',
+        address: '',
+      }
     }
   });
+
+  const watchedState = useWatch({
+    control: form.control,
+    name: 'location.state',
+  });
+
+  React.useEffect(() => {
+    if (watchedState) {
+      const stateData = states.find(s => s.name === watchedState);
+      setDistricts(stateData?.districts || []);
+      form.setValue('location.district', '');
+    } else {
+      setDistricts([]);
+    }
+  }, [watchedState, form]);
 
   const handlePriceSuggest: SubmitHandler<SuggestListingPriceInput> = async (data) => {
     setIsPriceLoading(true);
@@ -197,18 +219,24 @@ export default function SellPage() {
 
             <div className="space-y-2">
               <Label htmlFor="brand">Brand</Label>
-              <Select onValueChange={(value) => form.setValue("brand", value)}>
-                <SelectTrigger id="brand">
-                  <SelectValue placeholder="Select Brand" />
-                </SelectTrigger>
-                <SelectContent>
-                  {BRANDS.map((brand) => (
-                    <SelectItem key={brand} value={brand}>
-                      {brand}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="brand"
+                control={form.control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="brand">
+                      <SelectValue placeholder="Select Brand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BRANDS.map((brand) => (
+                        <SelectItem key={brand} value={brand}>
+                          {brand}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {form.formState.errors.brand && <p className="text-sm text-destructive">{form.formState.errors.brand.message}</p>}
             </div>
 
@@ -220,48 +248,66 @@ export default function SellPage() {
             
             <div className="space-y-2">
               <Label htmlFor="ram">RAM</Label>
-              <Select onValueChange={(value) => form.setValue("ram", Number(value))}>
-                <SelectTrigger id="ram">
-                  <SelectValue placeholder="Select RAM" />
-                </SelectTrigger>
-                <SelectContent>
-                  {RAM_OPTIONS.map((ram) => (
-                    <SelectItem key={ram} value={String(ram)}>{ram} GB</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="ram"
+                control={form.control}
+                render={({ field }) => (
+                  <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value ?? '')}>
+                    <SelectTrigger id="ram">
+                      <SelectValue placeholder="Select RAM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RAM_OPTIONS.map((ram) => (
+                        <SelectItem key={ram} value={String(ram)}>{ram} GB</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
                {form.formState.errors.ram && <p className="text-sm text-destructive">{form.formState.errors.ram.message}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="storage">Storage</Label>
-              <Select onValueChange={(value) => form.setValue("storage", Number(value))}>
-                <SelectTrigger id="storage">
-                  <SelectValue placeholder="Select Storage" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STORAGE_OPTIONS.map((storage) => (
-                    <SelectItem key={storage} value={String(storage)}>
-                      {storage >= 1024 ? `${storage / 1024} TB` : `${storage} GB`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <Controller
+                name="storage"
+                control={form.control}
+                render={({ field }) => (
+                  <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value ?? '')}>
+                    <SelectTrigger id="storage">
+                      <SelectValue placeholder="Select Storage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STORAGE_OPTIONS.map((storage) => (
+                        <SelectItem key={storage} value={String(storage)}>
+                          {storage >= 1024 ? `${storage / 1024} TB` : `${storage} GB`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
                {form.formState.errors.storage && <p className="text-sm text-destructive">{form.formState.errors.storage.message}</p>}
             </div>
 
              <div className="space-y-2">
               <Label htmlFor="condition">Condition</Label>
-              <Select onValueChange={(value) => form.setValue("condition", value as any)}>
-                <SelectTrigger id="condition">
-                  <SelectValue placeholder="Select Condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CONDITIONS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                  name="condition"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="condition">
+                        <SelectValue placeholder="Select Condition" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CONDITIONS.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+              />
                {form.formState.errors.condition && <p className="text-sm text-destructive">{form.formState.errors.condition.message}</p>}
             </div>
 
@@ -270,33 +316,51 @@ export default function SellPage() {
               <Input id="purchaseYear" type="number" placeholder="e.g., 2022" {...form.register("purchaseYear")} />
                {form.formState.errors.purchaseYear && <p className="text-sm text-destructive">{form.formState.errors.purchaseYear.message}</p>}
             </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="location">Location</Label>
-              <Controller
-                name="location"
-                control={form.control}
-                render={({ field }) => (
-                  <PlacesAutocomplete
-                    id="sell-location"
-                    onPlaceSelect={(place) => {
-                      if (place) {
-                        const { address, ...locationData } = place;
-                        field.onChange(locationData);
-                      } else {
-                        field.onChange(null);
-                      }
-                    }}
-                  />
-                )}
-              />
-              {form.formState.errors.location && (
-                <p className="text-sm text-destructive">
-                  {(form.formState.errors.location as any).message}
-                </p>
-              )}
+            
+            <div className="space-y-2">
+                <Label>State</Label>
+                <Controller
+                    name="location.state"
+                    control={form.control}
+                    render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select State" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {states.map(s => <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    )}
+                />
+                {form.formState.errors.location?.state && <p className="text-sm text-destructive">{form.formState.errors.location.state.message}</p>}
             </div>
             
+            <div className="space-y-2">
+                <Label>District</Label>
+                <Controller
+                    name="location.district"
+                    control={form.control}
+                    render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!watchedState}>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Select District" />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    )}
+                />
+                {form.formState.errors.location?.district && <p className="text-sm text-destructive">{form.formState.errors.location.district.message}</p>}
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="location.address">Full Address</Label>
+              <Textarea id="location.address" placeholder="Enter your full address (street, landmark, etc.)" {...form.register("location.address")} />
+              {form.formState.errors.location?.address && <p className="text-sm text-destructive">{form.formState.errors.location.address.message}</p>}
+            </div>
+
             <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea id="description" placeholder="Describe the phone's condition, any accessories included, etc." {...form.register("description")} />
@@ -336,7 +400,7 @@ export default function SellPage() {
               <Label htmlFor="price">Price (INR)</Label>
               <div className="flex gap-2">
                 <Input id="price" type="number" placeholder="e.g., 45000" {...form.register("price")} className="flex-1"/>
-                <Button type="button" variant="outline" disabled={isPriceLoading} onClick={form.handleSubmit(handlePriceSuggest)}>
+                <Button type="button" variant="outline" disabled={isPriceLoading} onClick={form.handleSubmit(handlePriceSuggest, (errors) => console.log(errors))}>
                   {isPriceLoading ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (

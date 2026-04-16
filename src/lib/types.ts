@@ -1,10 +1,9 @@
 import type { PlaceHolderImages } from "./placeholder-images";
 
 export type Location = {
-  city: string;
+  district: string;
   state: string;
-  lat: number;
-  lon: number;
+  address?: string;
 };
 
 export type Seller = {

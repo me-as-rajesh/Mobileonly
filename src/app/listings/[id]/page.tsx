@@ -207,7 +207,7 @@ export default function ListingDetailPage({ params }: PageProps) {
               )}
             </div>
             <div className="text-muted-foreground">
-              Posted in {location.city}, {location.state} on{" "}
+              Posted in {location.district}, {location.state} on{" "}
               <ClientDate
                 date={createdAt}
                 options={{

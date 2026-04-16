@@ -68,7 +68,7 @@ export function ListingCard({ listing, className }: ListingCardProps) {
           </Link>
         </h3>
         <p className="text-sm text-muted-foreground">
-          {listing.location.city}, {listing.location.state}
+          {listing.location.district}, {listing.location.state}
         </p>
         <div className="flex items-center gap-4 pt-1 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5" title="RAM">

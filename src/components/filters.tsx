@@ -15,9 +15,11 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { BRANDS, CONDITIONS, RAM_OPTIONS, STORAGE_OPTIONS } from "@/lib/types";
 import { MapPin } from "lucide-react";
-import type { FilterState } from "@/app/listings/page";
-import PlacesAutocomplete from "./ui/places-autocomplete";
-import type { Place } from "./ui/places-autocomplete";
+import type { FilterState } from "@/app/listings/client";
+import { Combobox } from "@/components/ui/combobox";
+import locationData from '@/states-and-districts.json';
+
+const allDistricts: { label: string; value: string }[] = locationData.states.flatMap(s => s.districts.map(d => ({ label: `${d}, ${s.state}`, value: d })) );
 
 interface FiltersProps {
   filters: FilterState;
@@ -29,15 +31,6 @@ interface FiltersProps {
 
 export function Filters({ filters, setFilters, className }: FiltersProps) {
   
-  const handlePlaceSelect = (place: Place | null) => {
-    if (place) {
-      const { address, ...locationData } = place;
-      setFilters((prev) => ({ ...prev, location: locationData }));
-    } else {
-      setFilters((prev) => ({ ...prev, location: null }));
-    }
-  };
-
   const handleReset = () => {
     setFilters({
       brand: "all",
@@ -45,8 +38,7 @@ export function Filters({ filters, setFilters, className }: FiltersProps) {
       condition: "all",
       ram: null,
       storage: null,
-      location: null,
-      distance: 500,
+      district: 'all',
     });
   };
 
@@ -103,36 +95,18 @@ export function Filters({ filters, setFilters, className }: FiltersProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="w-5 h-5" />
-            Location
+            District
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <PlacesAutocomplete
-            id="filter-location"
-            onPlaceSelect={handlePlaceSelect}
-            defaultValue={filters.location ? `${filters.location.city}, ${filters.location.state}` : ''}
-          />
-
-          <div className="space-y-2 pt-2">
-            <Label>Radius</Label>
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>1 km</span>
-              <span>500 km</span>
-            </div>
-            <Slider
-              min={1}
-              max={500}
-              step={1}
-              value={[filters.distance]}
-              onValueChange={(value) =>
-                setFilters((prev) => ({ ...prev, distance: value[0] }))
-              }
-              disabled={!filters.location}
-            />
-            <div className="text-center text-sm font-medium">
-              Show listings within {filters.distance} km
-            </div>
-          </div>
+           <Combobox 
+            options={[{label: "All Districts", value: "all"}, ...allDistricts]}
+            value={filters.district}
+            onChange={(value) => setFilters((prev) => ({ ...prev, district: value }))}
+            placeholder="Select a district"
+            searchPlaceholder="Search district..."
+            noResultsMessage="No district found."
+           />
         </CardContent>
       </Card>
 
