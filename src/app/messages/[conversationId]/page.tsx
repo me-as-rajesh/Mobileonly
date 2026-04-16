@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,6 @@ import { notFound, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { useUser, useFirestore, useDoc, useCollection } from "@/firebase";
 import { doc, collection, query, orderBy, addDoc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { useEffect, useRef, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientTime } from "@/components/client-date";
 
@@ -30,9 +30,9 @@ export default function ChatPage({ params }: { params: { conversationId: string 
     const router = useRouter();
     const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
-    const [newMessage, setNewMessage] = useState("");
-    const [isSending, setIsSending] = useState(false);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [newMessage, setNewMessage] = React.useState("");
+    const [isSending, setIsSending] = React.useState(false);
+    const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
 
     const conversationRef = doc(firestore, 'conversations', params.conversationId);
@@ -41,11 +41,11 @@ export default function ChatPage({ params }: { params: { conversationId: string 
     const messagesQuery = query(collection(firestore, `conversations/${params.conversationId}/messages`), orderBy('timestamp', 'asc'));
     const { data: messages, loading: messagesLoading } = useCollection<Message>(messagesQuery);
     
-    useEffect(() => {
+    React.useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    useEffect(() => {
+    React.useEffect(() => {
       if (!userLoading && !user) {
         router.push('/login');
       }

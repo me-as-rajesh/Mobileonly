@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import * as React from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -38,7 +38,7 @@ const currentUser = {
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = React.useState(false);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),

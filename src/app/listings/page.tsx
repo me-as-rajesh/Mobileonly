@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from 'react';
 import { listings as allListings } from "@/lib/data";
 import { ListingCard } from "@/components/listing-card";
 import { Filters } from "@/components/filters";
@@ -11,7 +12,6 @@ import {
 } from "@/components/ui/drawer";
 import { SlidersHorizontal } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useState, useMemo } from "react";
 import { getDistance } from "@/lib/utils";
 import type { Location } from "@/lib/types";
 
@@ -26,7 +26,7 @@ export interface FilterState {
 }
 
 export default function BrowsePage() {
-  const [filters, setFilters] = useState<FilterState>({
+  const [filters, setFilters] = React.useState<FilterState>({
     brand: "all",
     priceRange: [0, 150000],
     condition: "all",
@@ -36,7 +36,7 @@ export default function BrowsePage() {
     distance: 500,
   });
 
-  const filteredListings = useMemo(() => {
+  const filteredListings = React.useMemo(() => {
     return allListings.filter((listing) => {
       // Price
       if (

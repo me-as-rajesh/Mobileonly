@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { notFound, useRouter } from "next/navigation";
 import Image from "next/image";
 import { listings } from "@/lib/data";
@@ -38,14 +39,13 @@ import { useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
-import { useState } from "react";
 
 function StartChatButton({ listing }: { listing: Listing }) {
     const { user, profile } = useUser();
     const router = useRouter();
     const { toast } = useToast();
     const firestore = useFirestore();
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const handleStartChat = async () => {
         if (!user || !profile) {

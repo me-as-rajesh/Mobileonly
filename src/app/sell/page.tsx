@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
 import { useForm, type SubmitHandler, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -66,10 +66,10 @@ const CreateListingSchema = z.object({
 type CreateListingInput = z.infer<typeof CreateListingSchema>;
 
 export default function SellPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isPriceLoading, setIsPriceLoading] = useState(false);
-  const [priceSuggestion, setPriceSuggestion] = useState<PriceSuggestion | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isPriceLoading, setIsPriceLoading] = React.useState(false);
+  const [priceSuggestion, setPriceSuggestion] = React.useState<PriceSuggestion | null>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
   const { toast } = useToast();
 
   const form = useForm<CreateListingInput>({
@@ -80,7 +80,7 @@ export default function SellPage() {
     }
   });
 
-  const handlePriceSuggest: SubmitHandler<PriceSuggestionInput> = async (data) => {
+  const handlePriceSuggest: SubmitHandler<SuggestListingPriceInput> = async (data) => {
     setIsPriceLoading(true);
     setPriceSuggestion(null);
     try {

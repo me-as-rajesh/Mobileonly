@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -12,9 +12,9 @@ type ClientDateProps = {
 };
 
 export function ClientDate({ date, options, locale = "en-IN", className }: ClientDateProps) {
-  const [formatted, setFormatted] = useState<string | null>(null);
+  const [formatted, setFormatted] = React.useState<string | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     try {
         setFormatted(new Date(date).toLocaleDateString(locale, options));
     } catch (e) {
@@ -37,9 +37,9 @@ type ClientTimeProps = {
 };
 
 export function ClientTime({ date, options, locale = "en-IN", className }: ClientTimeProps) {
-    const [formatted, setFormatted] = useState<string | null>(null);
+    const [formatted, setFormatted] = React.useState<string | null>(null);
 
-    useEffect(() => {
+    React.useEffect(() => {
         try {
             setFormatted(new Date(date).toLocaleTimeString(locale, options));
         } catch (e) {

@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +25,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -37,8 +37,8 @@ export default function LoginPage() {
   const auth = useAuth();
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(LoginSchema),

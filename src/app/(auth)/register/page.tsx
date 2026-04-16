@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,7 +26,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { createUserProfile } from "@/lib/firestore";
 
@@ -43,8 +43,8 @@ export default function RegisterPage() {
   const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
