@@ -70,48 +70,6 @@ export function Header() {
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
-      {loading ? (
-          <Skeleton className="h-10 w-10 rounded-full" />
-      ) : user && profile ? (
-          <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-              <Button variant="secondary" size="icon" className="rounded-full">
-              <Avatar>
-                  <AvatarImage src={profile.avatar!} alt={profile.name!} />
-                  <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span className="sr-only">Toggle user menu</span>
-              </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-              <DropdownMenuLabel>{profile.name}</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                  <Link href={`/profile/${user.uid}`} className="w-full flex items-center"><CircleUser className="mr-2"/>Profile</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                  <Link href="/my-listings" className="w-full flex items-center"><Package className="mr-2"/>My Listings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                  <Link href="/recently-viewed" className="w-full flex items-center"><History className="mr-2"/>Recently Viewed</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                  <Link href="/settings" className="w-full flex items-center"><Settings className="mr-2"/>Settings</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {/* This would be conditional for admin role */}
-              <DropdownMenuItem asChild>
-                  <Link href="/admin" className="w-full flex items-center"><Shield className="mr-2"/>Admin Panel</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2"/>Logout</DropdownMenuItem>
-          </DropdownMenuContent>
-          </DropdownMenu>
-      ) : (
-          <Link href="/login" passHref>
-              <Button variant="outline"><LogIn className="mr-2"/>Login</Button>
-          </Link>
-      )}
       <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
         <Link
           href="/"
@@ -181,6 +139,48 @@ export function Header() {
         {user && (
             <Link href="/sell" passHref>
                 <Button className="hidden sm:inline-flex">Sell Now</Button>
+            </Link>
+        )}
+        {loading ? (
+            <Skeleton className="h-10 w-10 rounded-full" />
+        ) : user && profile ? (
+            <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                <Avatar>
+                    <AvatarImage src={profile.avatar!} alt={profile.name!} />
+                    <AvatarFallback>{profile.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="sr-only">Toggle user menu</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>{profile.name}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href={`/profile/${user.uid}`} className="w-full flex items-center"><CircleUser className="mr-2"/>Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/my-listings" className="w-full flex items-center"><Package className="mr-2"/>My Listings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/recently-viewed" className="w-full flex items-center"><History className="mr-2"/>Recently Viewed</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/settings" className="w-full flex items-center"><Settings className="mr-2"/>Settings</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {/* This would be conditional for admin role */}
+                <DropdownMenuItem asChild>
+                    <Link href="/admin" className="w-full flex items-center"><Shield className="mr-2"/>Admin Panel</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}><LogOut className="mr-2"/>Logout</DropdownMenuItem>
+            </DropdownMenuContent>
+            </DropdownMenu>
+        ) : (
+            <Link href="/login" passHref>
+                <Button variant="outline"><LogIn className="mr-2"/>Login</Button>
             </Link>
         )}
       </div>
