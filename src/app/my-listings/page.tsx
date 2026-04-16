@@ -1,3 +1,4 @@
+import * as React from "react";
 import { listings } from "@/lib/data";
 import { ListingCard } from "@/components/listing-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
