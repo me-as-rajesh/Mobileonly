@@ -19,6 +19,7 @@ interface PlacesAutocompleteProps {
 
 const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ id, onPlaceSelect, defaultValue = '' }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const [inputValue, setInputValue] = useState(defaultValue);
 
   useEffect(() => {
@@ -29,22 +30,19 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ id, onPlaceSele
     const currentInputRef = inputRef.current;
     if (!currentInputRef) return;
 
-    let autocomplete: google.maps.places.Autocomplete | null = null;
     let placeChangedListener: google.maps.MapsEventListener | null = null;
 
-    const init = () => {
-      if (!(window as any).google || !(window as any).google.maps || !(window as any).google.maps.places) {
-        return;
-      }
-      
-      autocomplete = new (window as any).google.maps.places.Autocomplete(currentInputRef, {
+    const initAutocomplete = () => {
+      if (autocompleteRef.current || !window.google || !window.google.maps || !window.google.maps.places) return;
+
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(currentInputRef, {
         types: ['(cities)'],
         componentRestrictions: { country: 'in' },
         fields: ['address_components', 'geometry.location', 'formatted_address']
       });
 
-      placeChangedListener = autocomplete.addListener('place_changed', () => {
-        const gPlace = autocomplete!.getPlace();
+      placeChangedListener = autocompleteRef.current.addListener('place_changed', () => {
+        const gPlace = autocompleteRef.current!.getPlace();
 
         if (gPlace.geometry && gPlace.address_components) {
           const getAddressComponent = (type: string) => {
@@ -68,21 +66,21 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ id, onPlaceSele
           onPlaceSelect(null);
         }
       });
-    }
-
-    const intervalId = setInterval(() => {
-      if ((window as any).google && (window as any).google.maps) {
-        init();
-        clearInterval(intervalId);
+    };
+    
+    const checkGoogleMaps = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        initAutocomplete();
+      } else {
+        setTimeout(checkGoogleMaps, 100);
       }
-    }, 200);
+    };
+
+    checkGoogleMaps();
 
     return () => {
-      clearInterval(intervalId);
-      if ((window as any).google && placeChangedListener) {
-        (window as any).google.maps.event.removeListener(placeChangedListener);
-        const pacContainers = document.querySelectorAll('.pac-container');
-        pacContainers.forEach(container => container.remove());
+      if (placeChangedListener) {
+        placeChangedListener.remove();
       }
     };
   }, [onPlaceSelect]);
