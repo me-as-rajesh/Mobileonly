@@ -1,17 +1,17 @@
 import {type FirebaseOptions} from 'firebase/app';
 
 const firebaseConfig: FirebaseOptions = {
-  apiKey: "AIzaSyBfXuVzsWrSf3Qrae6gufiAGoXFGJ7xvNY",
-  authDomain: "mobileonly-a2ef0.firebaseapp.com",
-  projectId: "mobileonly-a2ef0",
-  storageBucket: "mobileonly-a2ef0.firebasestorage.app",
-  messagingSenderId: "1087863751665",
-  appId: "1:1087863751665:web:bcfc1e6ca581bef7987a50"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
 export function getFirebaseConfig() {
   if (!firebaseConfig.apiKey) {
-    throw new Error('Firebase configuration is missing. Please check src/firebase/config.ts');
+    throw new Error('Firebase configuration is missing. Please check your .env file and ensure all NEXT_PUBLIC_FIREBASE_* variables are set.');
   }
   return firebaseConfig;
 }
