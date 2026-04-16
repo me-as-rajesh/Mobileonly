@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from "react";
+import * as React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
