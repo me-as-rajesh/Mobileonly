@@ -19,26 +19,31 @@ interface PlacesAutocompleteProps {
 
 const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ id, onPlaceSelect, defaultValue = '' }) => {
   const inputRef = useRef<HTMLInputElement>(null);
-  // Use a state for the input value to allow the user to clear it or type freely
   const [inputValue, setInputValue] = useState(defaultValue);
 
   useEffect(() => {
-    // Set the input value if the defaultValue changes (e.g., from form state)
     setInputValue(defaultValue);
   }, [defaultValue]);
 
   useEffect(() => {
-    let autocomplete: google.maps.places.Autocomplete | null = null;
     const currentInputRef = inputRef.current;
-    
-    if ((window as any).google && currentInputRef) {
+    if (!currentInputRef) return;
+
+    let autocomplete: google.maps.places.Autocomplete | null = null;
+    let placeChangedListener: google.maps.MapsEventListener | null = null;
+
+    const init = () => {
+      if (!(window as any).google || !(window as any).google.maps || !(window as any).google.maps.places) {
+        return;
+      }
+      
       autocomplete = new (window as any).google.maps.places.Autocomplete(currentInputRef, {
         types: ['(cities)'],
         componentRestrictions: { country: 'in' },
         fields: ['address_components', 'geometry.location', 'formatted_address']
       });
 
-      const placeChangedListener = autocomplete.addListener('place_changed', () => {
+      placeChangedListener = autocomplete.addListener('place_changed', () => {
         const gPlace = autocomplete!.getPlace();
 
         if (gPlace.geometry && gPlace.address_components) {
@@ -63,22 +68,27 @@ const PlacesAutocomplete: React.FC<PlacesAutocompleteProps> = ({ id, onPlaceSele
           onPlaceSelect(null);
         }
       });
-
-      // Cleanup function to remove the listener
-      return () => {
-        if ((window as any).google) {
-          (window as any).google.maps.event.removeListener(placeChangedListener);
-          // More robust cleanup
-          const pacContainers = document.querySelectorAll('.pac-container');
-          pacContainers.forEach(container => container.remove());
-        }
-      };
     }
+
+    const intervalId = setInterval(() => {
+      if ((window as any).google && (window as any).google.maps) {
+        init();
+        clearInterval(intervalId);
+      }
+    }, 200);
+
+    return () => {
+      clearInterval(intervalId);
+      if ((window as any).google && placeChangedListener) {
+        (window as any).google.maps.event.removeListener(placeChangedListener);
+        const pacContainers = document.querySelectorAll('.pac-container');
+        pacContainers.forEach(container => container.remove());
+      }
+    };
   }, [onPlaceSelect]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setInputValue(e.target.value);
-      // If user clears the input, reset the selected place
       if (e.target.value === '') {
           onPlaceSelect(null);
       }
