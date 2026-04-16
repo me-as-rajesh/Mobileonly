@@ -9,9 +9,22 @@ import { ListingCard } from "@/components/listing-card";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const featuredListings = listings.slice(0, 8);
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const searchQuery = formData.get('search') as string;
+    if (searchQuery.trim()) {
+      router.push(`/listings?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/listings');
+    }
+  };
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-background">
@@ -33,8 +46,9 @@ export default function Home() {
                     </p>
                   </div>
                   <div className="w-full max-w-lg space-y-2">
-                    <form className="flex space-x-2">
+                    <form className="flex space-x-2" onSubmit={handleSearch}>
                       <Input
+                        name="search"
                         className="max-w-lg flex-1 text-base"
                         placeholder="Search for a model, e.g. iPhone 15 Pro"
                         type="search"

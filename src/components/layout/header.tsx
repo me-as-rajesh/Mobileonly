@@ -33,7 +33,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
@@ -54,6 +54,7 @@ const authenticatedNavItems = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, profile, loading } = useUser();
   const auth = useAuth();
   
@@ -67,6 +68,18 @@ export function Header() {
   const handleLogout = () => {
     signOut(auth);
   }
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const searchQuery = formData.get('search') as string;
+    if (searchQuery.trim()) {
+      router.push(`/listings?q=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      router.push('/listings');
+    }
+  };
+
 
   return (
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
@@ -126,11 +139,12 @@ export function Header() {
         </SheetContent>
       </Sheet>
       <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        <form className="ml-auto flex-1 sm:flex-initial">
+        <form className="ml-auto flex-1 sm:flex-initial" onSubmit={handleSearch}>
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
+              name="search"
               placeholder="Search products..."
               className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
             />

@@ -10,10 +10,11 @@ import {
   DrawerContent,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getDistance } from "@/lib/utils";
 import type { Location } from "@/lib/types";
+import { useSearchParams, useRouter } from "next/navigation";
 
 export interface FilterState {
   brand: string;
@@ -26,6 +27,10 @@ export interface FilterState {
 }
 
 export default function BrowsePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('q');
+
   const [filters, setFilters] = React.useState<FilterState>({
     brand: "all",
     priceRange: [0, 150000],
@@ -38,6 +43,17 @@ export default function BrowsePage() {
 
   const filteredListings = React.useMemo(() => {
     return allListings.filter((listing) => {
+      // Search Query
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        if (
+          !listing.title.toLowerCase().includes(searchLower) &&
+          !listing.brand.toLowerCase().includes(searchLower) &&
+          !listing.model.toLowerCase().includes(searchLower)
+        ) {
+          return false;
+        }
+      }
       // Price
       if (
         listing.price < filters.priceRange[0] ||
@@ -75,14 +91,17 @@ export default function BrowsePage() {
       }
       return true;
     });
-  }, [filters]);
+  }, [filters, searchQuery]);
 
   return (
     <div className="container mx-auto grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 py-8 px-4 md:px-6">
       <aside className="hidden md:block">
         <div className="sticky top-20">
+           <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
           <h2 className="text-2xl font-bold font-headline mb-4">Filters</h2>
-          <ScrollArea className="h-[calc(100vh-10rem)] pr-4">
+          <ScrollArea className="h-[calc(100vh-14rem)] pr-4">
             <Filters filters={filters} setFilters={setFilters} />
           </ScrollArea>
         </div>
@@ -91,9 +110,12 @@ export default function BrowsePage() {
       <main>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold font-headline tracking-tighter sm:text-4xl">
-            All Listings ({filteredListings.length})
+            {searchQuery ? `Results for "${searchQuery}"` : "All Listings"} ({filteredListings.length})
           </h1>
-          <div className="md:hidden">
+          <div className="flex items-center">
+             <Button variant="ghost" onClick={() => router.back()} className="md:hidden mr-2">
+                <ArrowLeft className="h-4 w-4" />
+            </Button>
             <Drawer>
               <DrawerTrigger asChild>
                 <Button variant="outline" size="icon">

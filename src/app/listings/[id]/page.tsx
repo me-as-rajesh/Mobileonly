@@ -32,6 +32,7 @@ import {
   Smartphone,
   CalendarDays,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import type { Listing } from "@/lib/types";
 import { ClientDate } from "@/components/client-date";
@@ -130,6 +131,7 @@ type PageProps = {
 };
 
 export default function ListingDetailPage({ params }: PageProps) {
+  const router = useRouter();
   const listing = listings.find((l) => l.id === params.id);
 
   if (!listing) {
@@ -162,6 +164,9 @@ export default function ListingDetailPage({ params }: PageProps) {
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 md:px-6">
+      <Button variant="ghost" onClick={() => router.back()} className="mb-8">
+        <ArrowLeft className="mr-2 h-4 w-4" /> Back to listings
+      </Button>
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
         <div className="md:sticky md:top-24 self-start">
           <Carousel>
