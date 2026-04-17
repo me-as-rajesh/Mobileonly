@@ -46,7 +46,7 @@ export async function getAuthenticatedUserProfile(): Promise<UserProfile | null>
 
 export async function createUser(userData: CreateUserParams) {
   if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
   try {
     const db = getDatabase(adminApp);
@@ -78,7 +78,7 @@ export async function createUser(userData: CreateUserParams) {
 
 export async function getUserByUid(uid: string): Promise<UserProfile | null> {
   if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
   try {
     const db = getDatabase(adminApp);
@@ -99,7 +99,7 @@ export async function getUserByUid(uid: string): Promise<UserProfile | null> {
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
   try {
     const db = getDatabase(adminApp);

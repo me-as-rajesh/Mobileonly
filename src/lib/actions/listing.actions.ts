@@ -27,7 +27,7 @@ interface CreateListingParams {
 
 export async function createListing(params: CreateListingParams) {
   if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
   try {
     const userProfile = await getAuthenticatedUserProfile();
@@ -75,7 +75,7 @@ export async function createListing(params: CreateListingParams) {
 
 export async function getListings(filters: SearchParams): Promise<ListingType[]> {
   if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
   try {
     const db = getDatabase(adminApp);
@@ -157,7 +157,7 @@ export async function getListings(filters: SearchParams): Promise<ListingType[]>
 
 export async function getListingById(id: string): Promise<ListingType | null> {
   if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
   try {
     const db = getDatabase(adminApp);
@@ -203,7 +203,7 @@ export async function getListingById(id: string): Promise<ListingType | null> {
 
 export async function getMyListings() {
    if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
    try {
     const userProfile = await getAuthenticatedUserProfile();
@@ -229,7 +229,7 @@ type UpdateListingData = Omit<CreateListingParams, 'images'>;
 
 export async function updateListing(id: string, data: UpdateListingData) {
    if (!adminApp) {
-    throw new Error("Firebase Admin SDK not initialized.");
+    throw new Error("Firebase Admin SDK not initialized. The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is likely missing on the server.");
   }
   try {
     const userProfile = await getAuthenticatedUserProfile();
