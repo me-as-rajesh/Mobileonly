@@ -65,9 +65,9 @@ export async function getListings(filters: SearchParams): Promise<ListingType[]>
         { model: { $regex: filters.q, $options: 'i' } },
       ];
     }
-    if (filters.brand) query.brand = { $regex: `^${filters.brand}$`, $options: 'i' };
-    if (filters.condition) query.condition = filters.condition;
-    if (filters.district) query['location.district'] = filters.district;
+    if (filters.brand && filters.brand !== 'all') query.brand = { $regex: `^${filters.brand}$`, $options: 'i' };
+    if (filters.condition && filters.condition !== 'all') query.condition = filters.condition;
+    if (filters.district && filters.district !== 'all') query['location.district'] = filters.district;
     if (filters.ram) query['variant.ram'] = Number(filters.ram);
     if (filters.storage) query['variant.storage'] = Number(filters.storage);
     if (filters.minPrice || filters.maxPrice) {
@@ -151,4 +151,55 @@ export async function getMyListings() {
      console.error('Error fetching my listings:', error);
      return { activeListings: [], soldListings: [], flaggedListings: [] };
    }
+}
+
+type UpdateListingData = Omit<CreateListingParams, 'images'>;
+
+export async function updateListing(id: string, data: UpdateListingData) {
+  try {
+    await dbConnect();
+    const userProfile = await getAuthenticatedUserProfile();
+    if (!userProfile) {
+      throw new Error('You must be logged in to update a listing.');
+    }
+
+    const listing = await Listing.findById(id);
+
+    if (!listing || listing.seller.toString() !== userProfile._id.toString()) {
+      throw new Error('Listing not found or you do not have permission to edit it.');
+    }
+
+    const updatePayload = {
+      ...data,
+      variant: {
+        ram: data.ram,
+        storage: data.storage,
+        color: listing.variant.color, // Preserve existing color
+      }
+    };
+    
+    // These are now nested in variant, so remove from top level
+    delete (updatePayload as any).ram;
+    delete (updatePayload as any).storage;
+
+    const updatedListing = await Listing.findByIdAndUpdate(
+      id,
+      updatePayload,
+      { new: true }
+    );
+    
+    if (!updatedListing) {
+        throw new Error('Failed to update listing in database');
+    }
+
+    revalidatePath(`/listings/${id}`);
+    revalidatePath(`/my-listings/${id}/edit`);
+    revalidatePath('/my-listings');
+  } catch (error) {
+    console.error('Error updating listing:', error);
+    if (error instanceof Error) {
+        throw new Error(`Failed to update listing: ${error.message}`);
+    }
+    throw new Error('An unknown error occurred while updating the listing.');
+  }
 }

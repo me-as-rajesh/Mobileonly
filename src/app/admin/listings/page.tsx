@@ -17,13 +17,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Trash2, ShieldCheck } from "lucide-react";
-import { listings } from "@/lib/data";
+import { getListings } from "@/lib/actions/listing.actions";
 import Link from "next/link";
 import { ClientDate } from "@/components/client-date";
 
-export default function AdminListingsPage() {
-    const allListings = [...listings];
-    allListings[2] = { ...allListings[2], status: 'flagged' };
+export default async function AdminListingsPage() {
+  const allListings = await getListings({});
 
   return (
     <div>

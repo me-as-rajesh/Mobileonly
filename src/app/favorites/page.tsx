@@ -1,9 +1,10 @@
 import * as React from "react";
-import { listings } from "@/lib/data";
 import { ListingCard } from "@/components/listing-card";
+import { getListings } from "@/lib/actions/listing.actions";
 
-export default function FavoritesPage() {
-  const favoriteListings = listings.slice(0, 4);
+export default async function FavoritesPage() {
+  // TODO: Replace with actual favorited listings logic
+  const favoriteListings = await getListings({ limit: 4 });
 
   return (
     <div className="container mx-auto max-w-6xl py-12 px-4 md:px-6">

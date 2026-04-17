@@ -28,16 +28,17 @@ import {
   CONDITIONS,
   RAM_OPTIONS,
   STORAGE_OPTIONS,
-  type Location,
+  type Listing,
 } from "@/lib/types";
 import { Check, Loader2, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { listings } from "@/lib/data";
-import { notFound, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import locationData from '../../../../../states-and-districts.json';
 import { Textarea } from "@/components/ui/textarea";
+import { getListingById, updateListing } from "@/lib/actions/listing.actions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const states = locationData.states.map(s => ({ name: s.state, districts: s.districts }));
 
@@ -64,37 +65,86 @@ const EditListingSchema = z.object({
 
 type EditListingInput = z.infer<typeof EditListingSchema>;
 
+function EditPageSkeleton() {
+    return (
+        <div className="container mx-auto max-w-4xl py-12 px-4 md:px-6">
+             <div className="space-y-4 mb-8 text-center">
+                <Skeleton className="h-12 w-1/2 mx-auto" />
+                <Skeleton className="h-6 w-3/4 mx-auto" />
+            </div>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-1/3" />
+                    <Skeleton className="h-4 w-1/2" />
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Skeleton className="h-10 w-full md:col-span-2"/>
+                    <Skeleton className="h-10 w-full"/>
+                    <Skeleton className="h-10 w-full"/>
+                    <Skeleton className="h-10 w-full"/>
+                    <Skeleton className="h-10 w-full"/>
+                    <Skeleton className="h-10 w-full"/>
+                    <Skeleton className="h-10 w-full"/>
+                    <Skeleton className="h-24 w-full md:col-span-2"/>
+                    <Skeleton className="h-10 w-full md:col-span-2"/>
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-12 w-full"/>
+                </CardFooter>
+            </Card>
+        </div>
+    )
+}
+
+
 export default function EditListingPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const listing = listings.find((l) => l.id === params.id);
-
-  if (!listing) {
-    notFound();
-  }
-
+  const [listing, setListing] = React.useState<Listing | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
   const [districts, setDistricts] = React.useState<string[]>([]);
 
   const form = useForm<EditListingInput>({
     resolver: zodResolver(EditListingSchema),
-    defaultValues: {
-      brand: listing.brand,
-      model: listing.model,
-      ram: listing.variant.ram,
-      storage: listing.variant.storage,
-      condition: listing.condition,
-      purchaseYear: listing.purchaseYear,
-      title: listing.title,
-      description: listing.description,
-      price: listing.price,
-      location: {
-        state: listing.location.state,
-        district: listing.location.district,
-        address: listing.location.address || '',
-      }
-    },
   });
+
+  React.useEffect(() => {
+    const fetchListing = async () => {
+      try {
+        setLoading(true);
+        const data = await getListingById(params.id);
+        if (!data) {
+          toast({ variant: 'destructive', title: 'Listing not found' });
+          router.push('/my-listings');
+        } else {
+          setListing(data);
+          form.reset({
+            brand: data.brand,
+            model: data.model,
+            ram: data.variant.ram,
+            storage: data.variant.storage,
+            condition: data.condition,
+            purchaseYear: data.purchaseYear,
+            title: data.title,
+            description: data.description,
+            price: data.price,
+            location: {
+              state: data.location.state,
+              district: data.location.district,
+              address: data.location.address || '',
+            }
+          });
+        }
+      } catch (error) {
+        toast({ variant: 'destructive', title: 'Failed to load listing' });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchListing();
+  }, [params.id, router, toast, form]);
+
 
   const watchedState = useWatch({
     control: form.control,
@@ -102,28 +152,62 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
   });
 
   React.useEffect(() => {
-    if (watchedState) {
-      const stateData = states.find(s => s.name === watchedState);
+    const currentState = watchedState || listing?.location.state;
+    if (currentState) {
+      const stateData = states.find(s => s.name === currentState);
       setDistricts(stateData?.districts || []);
-      form.setValue('location.district', ''); // Reset district when state changes
+      // Don't reset district if the state hasn't actually changed from the initial load
+      if (watchedState && watchedState !== listing?.location.state) {
+        form.setValue('location.district', ''); 
+      }
     } else {
-        const stateData = states.find(s => s.name === listing.location.state);
-        setDistricts(stateData?.districts || []);
+        setDistricts([]);
     }
-  }, [watchedState, form, listing.location.state]);
+  }, [watchedState, form, listing?.location.state]);
 
 
   const onSubmit: SubmitHandler<EditListingInput> = async (data) => {
     setIsSubmitting(true);
-    console.log("Updated data:", data);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    toast({
-      title: "Listing Updated",
-      description: `${data.model} has been successfully updated.`,
-    });
-    setIsSubmitting(false);
-    router.push("/my-listings");
+    try {
+      await updateListing(params.id, data);
+      toast({
+        title: "Listing Updated",
+        description: `${data.model} has been successfully updated.`,
+      });
+      router.push("/my-listings");
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Update Failed', description: error.message });
+    }
+    finally {
+        setIsSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return (
+        <div className="relative flex min-h-dvh flex-col bg-background">
+          <Header />
+          <main className="flex-1"><EditPageSkeleton /></main>
+          <Footer />
+        </div>
+    );
+  }
+
+  if (!listing) {
+    // This case should ideally not be reached due to redirection in useEffect
+    return (
+         <div className="relative flex min-h-dvh flex-col bg-background">
+            <Header />
+            <main className="flex-1">
+                <div className="container mx-auto max-w-4xl py-12 px-4 md:px-6 text-center">
+                    <h1 className="text-2xl font-bold">Listing not found.</h1>
+                    <p className="text-muted-foreground">Redirecting you to your listings...</p>
+                </div>
+            </main>
+            <Footer />
+        </div>
+    )
+  }
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-background">
@@ -158,21 +242,24 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="brand">Brand</Label>
-                  <Select
-                    defaultValue={listing.brand}
-                    onValueChange={(value) => form.setValue("brand", value)}
-                  >
-                    <SelectTrigger id="brand">
-                      <SelectValue placeholder="Select Brand" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BRANDS.map((brand) => (
-                        <SelectItem key={brand} value={brand}>
-                          {brand}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="brand"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger id="brand">
+                          <SelectValue placeholder="Select Brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {BRANDS.map((brand) => (
+                            <SelectItem key={brand} value={brand}>
+                              {brand}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -183,67 +270,70 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
 
                 <div className="space-y-2">
                   <Label htmlFor="ram">RAM</Label>
-                  <Select
-                    defaultValue={String(listing.variant.ram)}
-                    onValueChange={(value) =>
-                      form.setValue("ram", Number(value))
-                    }
-                  >
-                    <SelectTrigger id="ram">
-                      <SelectValue placeholder="Select RAM" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RAM_OPTIONS.map((ram) => (
-                        <SelectItem key={ram} value={String(ram)}>
-                          {ram} GB
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    name="ram"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value ?? '')}>
+                        <SelectTrigger id="ram">
+                          <SelectValue placeholder="Select RAM" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {RAM_OPTIONS.map((ram) => (
+                            <SelectItem key={ram} value={String(ram)}>
+                              {ram} GB
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="storage">Storage</Label>
-                  <Select
-                    defaultValue={String(listing.variant.storage)}
-                    onValueChange={(value) =>
-                      form.setValue("storage", Number(value))
-                    }
-                  >
-                    <SelectTrigger id="storage">
-                      <SelectValue placeholder="Select Storage" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STORAGE_OPTIONS.map((storage) => (
-                        <SelectItem key={storage} value={String(storage)}>
-                          {storage >= 1024
-                            ? `${storage / 1024} TB`
-                            : `${storage} GB`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <Controller
+                    name="storage"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value ?? '')}>
+                        <SelectTrigger id="storage">
+                          <SelectValue placeholder="Select Storage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STORAGE_OPTIONS.map((storage) => (
+                            <SelectItem key={storage} value={String(storage)}>
+                              {storage >= 1024
+                                ? `${storage / 1024} TB`
+                                : `${storage} GB`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="condition">Condition</Label>
-                  <Select
-                    defaultValue={listing.condition}
-                    onValueChange={(value) =>
-                      form.setValue("condition", value as any)
-                    }
-                  >
-                    <SelectTrigger id="condition">
-                      <SelectValue placeholder="Select Condition" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CONDITIONS.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <Controller
+                      name="condition"
+                      control={form.control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <SelectTrigger id="condition">
+                            <SelectValue placeholder="Select Condition" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CONDITIONS.map((c) => (
+                              <SelectItem key={c.value} value={c.value}>
+                                {c.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                  />
                 </div>
 
                 <div className="space-y-2">
@@ -281,7 +371,7 @@ export default function EditListingPage({ params }: { params: { id: string } }) 
                         name="location.district"
                         control={form.control}
                         render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!watchedState}>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!watchedState && !listing.location.state}>
                             <SelectTrigger>
                             <SelectValue placeholder="Select District" />
                             </SelectTrigger>

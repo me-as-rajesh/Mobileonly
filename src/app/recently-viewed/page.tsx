@@ -1,12 +1,13 @@
 import * as React from "react";
-import { listings } from "@/lib/data";
 import { ListingCard } from "@/components/listing-card";
 import { History } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { getListings } from "@/lib/actions/listing.actions";
 
-export default function RecentlyViewedPage() {
-  const recentlyViewedListings = listings.slice(4, 8).reverse();
+export default async function RecentlyViewedPage() {
+  // TODO: Replace with actual recently viewed logic
+  const recentlyViewedListings = await getListings({ limit: 4 });
 
   return (
     <div className="relative flex min-h-dvh flex-col bg-background">
