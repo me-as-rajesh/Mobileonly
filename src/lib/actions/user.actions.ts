@@ -27,12 +27,11 @@ export interface UserProfile {
     updatedAt: Date;
 }
 
-// Ensure Firebase Admin is initialized
-if (!adminApp) {
-  throw new Error("Firebase Admin SDK not initialized");
-}
-
 export async function getAuthenticatedUserProfile(): Promise<UserProfile | null> {
+  if (!adminApp) {
+    console.error("Firebase Admin SDK not initialized. Check server environment variables.");
+    return null;
+  }
   try {
     const sessionCookie = cookies().get('session')?.value;
     if (!sessionCookie) {
@@ -42,6 +41,7 @@ export async function getAuthenticatedUserProfile(): Promise<UserProfile | null>
     return await getUserByUid(decodedToken.uid);
   } catch (error) {
     console.error('Failed to get authenticated user profile:', error);
+    // This can happen if the cookie is invalid or expired. It's not a critical server error.
     return null;
   }
 }

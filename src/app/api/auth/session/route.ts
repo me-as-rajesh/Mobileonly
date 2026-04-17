@@ -1,14 +1,15 @@
+'use server';
 import { auth } from 'firebase-admin';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { adminApp } from '@/firebase/admin';
 
-// Ensure Firebase Admin is initialized
-if (!adminApp) {
-  throw new Error("Firebase Admin SDK not initialized");
-}
-
 export async function POST(request: NextRequest) {
+  if (!adminApp) {
+    console.error("Firebase Admin SDK not initialized. Check server environment variables.");
+    return NextResponse.json({ success: false, error: "Server configuration error." }, { status: 500 });
+  }
+
   const { idToken } = await request.json();
 
   const expiresIn = 60 * 60 * 24 * 5 * 1000; // 5 days
@@ -33,6 +34,12 @@ export async function DELETE() {
   const sessionCookie = cookies().get('session')?.value;
   if (sessionCookie) {
     cookies().delete('session');
+
+    if (!adminApp) {
+      console.warn("Firebase Admin SDK not initialized. Cannot revoke tokens, but session cookie is cleared.");
+      return NextResponse.json({ success: true });
+    }
+    
     try {
       const decodedClaims = await auth(adminApp).verifySessionCookie(sessionCookie);
       await auth(adminApp).revokeRefreshTokens(decodedClaims.sub);
