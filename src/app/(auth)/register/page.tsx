@@ -63,7 +63,7 @@ export default function RegisterPage() {
         email: data.email,
         name: data.name,
         role: data.role,
-        avatar: userCredential.user.photoURL
+        avatar: userCredential.user.photoURL || ''
       });
       
       toast({ title: "Account Created", description: "You have been successfully registered." });
@@ -89,7 +89,7 @@ export default function RegisterPage() {
         uid: result.user.uid,
         email: result.user.email!,
         name: result.user.displayName || 'New User',
-        avatar: result.user.photoURL,
+        avatar: result.user.photoURL || '',
         role: 'buyer', // Default role for Google sign-up
       });
 

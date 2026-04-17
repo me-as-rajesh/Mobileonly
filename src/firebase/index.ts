@@ -4,6 +4,7 @@
 import {getApp, getApps, initializeApp, type FirebaseApp} from 'firebase/app';
 import {getAuth, type Auth} from 'firebase/auth';
 import {getFirestore, type Firestore} from 'firebase/firestore';
+import {getDatabase, type Database} from 'firebase/database';
 import {getFirebaseConfig} from './config';
 
 // Provides a singleton for the Firebase app instance.
@@ -15,6 +16,7 @@ function getFirebaseApp() {
 
 let auth: Auth;
 let firestore: Firestore;
+let database: Database;
 
 /**
  * Initializes and returns Firebase services.
@@ -24,12 +26,14 @@ export function initializeFirebase(): {
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  database: Database;
 } {
   const app = getFirebaseApp();
   auth = getAuth(app);
   firestore = getFirestore(app);
+  database = getDatabase(app);
 
-  return {app, auth, firestore};
+  return {app, auth, firestore, database};
 }
 
 export * from './provider';

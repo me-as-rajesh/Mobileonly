@@ -12,6 +12,7 @@ if (!admin.apps.length) {
   if (serviceAccount) {
     app = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
+      databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
     });
   } else {
     console.warn("Firebase Admin SDK not initialized. FIREBASE_SERVICE_ACCOUNT_KEY env var is missing.");

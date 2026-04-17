@@ -2,9 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import dbConnect from '../mongodb';
-import User from '@/models/User';
 import { auth } from 'firebase-admin';
+import { getDatabase } from 'firebase-admin/database';
 import { cookies } from 'next/headers';
 import { adminApp } from '@/firebase/admin';
 
@@ -17,14 +16,13 @@ interface CreateUserParams {
 }
 
 export interface UserProfile {
-    _id: string;
     uid: string;
     email: string;
     name: string;
     avatar?: string;
     role: 'buyer' | 'seller' | 'both';
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export async function getAuthenticatedUserProfile(): Promise<UserProfile | null> {
@@ -47,25 +45,31 @@ export async function getAuthenticatedUserProfile(): Promise<UserProfile | null>
 }
 
 export async function createUser(userData: CreateUserParams) {
+  if (!adminApp) {
+    throw new Error("Firebase Admin SDK not initialized.");
+  }
   try {
-    await dbConnect();
+    const db = getDatabase(adminApp);
+    const userRef = db.ref(`users/${userData.uid}`);
+    const snapshot = await userRef.once('value');
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ uid: userData.uid });
-    if (existingUser) {
-      // Optionally update user data on new login
-      return JSON.parse(JSON.stringify(existingUser));
+    if (snapshot.exists()) {
+      // User already exists, return existing data
+      return snapshot.val();
     }
-
-    const newUser = await User.create({
-      uid: userData.uid,
+    
+    const newUser: Omit<UserProfile, 'uid'> = {
       email: userData.email,
       name: userData.name,
-      avatar: userData.avatar,
+      avatar: userData.avatar || '',
       role: userData.role,
-    });
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
 
-    return JSON.parse(JSON.stringify(newUser));
+    await userRef.set(newUser);
+
+    return { ...newUser, uid: userData.uid };
   } catch (error) {
     console.error('Error creating user:', error);
     throw new Error('Failed to create user in database');
@@ -73,13 +77,48 @@ export async function createUser(userData: CreateUserParams) {
 }
 
 export async function getUserByUid(uid: string): Promise<UserProfile | null> {
+  if (!adminApp) {
+    throw new Error("Firebase Admin SDK not initialized.");
+  }
   try {
-    await dbConnect();
-    const user = await User.findOne({ uid });
-    if (!user) return null;
-    return JSON.parse(JSON.stringify(user));
+    const db = getDatabase(adminApp);
+    const userRef = db.ref(`users/${uid}`);
+    const snapshot = await userRef.once('value');
+    
+    if (!snapshot.exists()) {
+      return null;
+    }
+    
+    const userData = snapshot.val();
+    return { ...userData, uid };
   } catch (error) {
     console.error('Error fetching user:', error);
     throw new Error('Failed to fetch user data');
+  }
+}
+
+export async function getAllUsers(): Promise<UserProfile[]> {
+  if (!adminApp) {
+    throw new Error("Firebase Admin SDK not initialized.");
+  }
+  try {
+    const db = getDatabase(adminApp);
+    const usersRef = db.ref('users');
+    const snapshot = await usersRef.once('value');
+
+    if (!snapshot.exists()) {
+      return [];
+    }
+
+    const usersData = snapshot.val();
+    const usersArray = Object.keys(usersData).map(uid => ({
+      ...usersData[uid],
+      uid: uid,
+    }));
+    
+    return JSON.parse(JSON.stringify(usersArray));
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    throw new Error('Failed to fetch all users.');
   }
 }

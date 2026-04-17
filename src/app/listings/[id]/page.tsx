@@ -164,9 +164,16 @@ export default function ListingDetailPage({ params }: PageProps) {
   React.useEffect(() => {
     const fetchListing = async () => {
       setLoading(true);
-      const fetchedListing = await getListingById(params.id);
-      if (fetchedListing) {
-        setListing(fetchedListing);
+      try {
+        const fetchedListing = await getListingById(params.id);
+        if (fetchedListing) {
+          setListing(fetchedListing);
+        } else {
+          notFound();
+        }
+      } catch (error) {
+        console.error(error);
+        notFound();
       }
       setLoading(false);
     };
@@ -179,7 +186,8 @@ export default function ListingDetailPage({ params }: PageProps) {
   }
   
   if (!listing) {
-    notFound();
+    // This case is largely handled by the fetch effect, but as a fallback.
+    return <ListingDetailSkeleton />;
   }
 
   const {

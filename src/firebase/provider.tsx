@@ -5,6 +5,7 @@
 import type {FirebaseApp} from 'firebase/app';
 import type {Auth} from 'firebase/auth';
 import type {Firestore} from 'firebase/firestore';
+import type {Database} from 'firebase/database';
 import {createContext, useContext, type ReactNode} from 'react';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
@@ -14,6 +15,7 @@ const FirebaseContext = createContext<{
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  database: Database;
 } | null>(null);
 
 /**
@@ -28,6 +30,7 @@ export function FirebaseProvider({
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  database: Database;
 }) {
   return (
     <FirebaseContext.Provider value={props}>
@@ -62,4 +65,9 @@ export function useAuth() {
 /** Returns the Firebase firestore instance. */
 export function useFirestore() {
   return useFirebase().firestore;
+}
+
+/** Returns the Firebase Realtime Database instance. */
+export function useDatabase() {
+    return useFirebase().database;
 }

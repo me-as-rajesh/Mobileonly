@@ -44,7 +44,7 @@ export default async function ProfilePage({ params }: { params: { userId: string
     notFound();
   }
 
-  const userListings = await getListings({ sellerId: userProfile._id.toString() });
+  const userListings = await getListings({ sellerId: userProfile.uid });
 
   return (
     <div className="bg-muted/40">
@@ -66,7 +66,7 @@ export default async function ProfilePage({ params }: { params: { userId: string
                   <span>(124 reviews)</span>
                 </div>
                 <span>•</span>
-                <span>Member since <ClientDate date={userProfile.createdAt.toString()} options={{ year: 'numeric' }} /></span>
+                <span>Member since <ClientDate date={userProfile.createdAt} options={{ year: 'numeric' }} /></span>
               </div>
               <p className="text-muted-foreground pt-2">
                 Tech enthusiast and trusted seller on ConnectCell. All devices are carefully inspected.

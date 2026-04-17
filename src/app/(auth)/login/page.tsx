@@ -68,13 +68,12 @@ export default function LoginPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      // This will create a user in MongoDB if they don't exist
       await createUser({
         uid: result.user.uid,
         email: result.user.email!,
         name: result.user.displayName || 'New User',
-        avatar: result.user.photoURL,
-        role: 'buyer',
+        avatar: result.user.photoURL || '',
+        role: 'buyer', // Default role for Google sign-in
       });
 
       toast({ title: "Success", description: "Logged in successfully." });

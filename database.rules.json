@@ -1,0 +1,23 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": true,
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "listings": {
+      ".read": true,
+      "$listingId": {
+        ".write": "auth != null && (!data.exists() || data.child('seller').val() === auth.uid)",
+        ".validate": "newData.hasChildren(['title', 'brand', 'model', 'price', 'condition', 'description', 'images', 'location', 'seller']) && newData.child('seller').val() === auth.uid"
+      }
+    },
+     "user-listings": {
+        "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid"
+        }
+     }
+  }
+}
