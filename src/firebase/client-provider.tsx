@@ -6,6 +6,8 @@ import {FirebaseProvider, initializeFirebase} from '@/firebase';
 import type {ReactNode} from 'react';
 import { useEffect } from 'react';
 import { useAuth } from './provider';
+import { getFirebaseConfig } from './config';
+import { FirebaseConfigError } from '@/components/FirebaseConfigError';
 
 function SessionHandler() {
   const auth = useAuth();
@@ -31,16 +33,32 @@ function SessionHandler() {
   return null;
 }
 
+/**
+ * Validates the Firebase configuration.
+ * @returns {boolean} True if the configuration is valid, false otherwise.
+ */
+function isConfigValid(): boolean {
+    const config = getFirebaseConfig();
+    return !!(
+        config.databaseURL &&
+        !config.databaseURL.includes('YOUR_DATABASE_URL_HERE')
+    );
+}
 
 /**
  * Initializes Firebase on the client and provides the Firebase context.
  * This ensures that Firebase is only initialized once.
+ * It will render an error screen if Firebase is not configured correctly.
  */
 export function FirebaseClientProvider({children}: {children: ReactNode}) {
-  const {app, auth, firestore} = initializeFirebase();
+  if (!isConfigValid()) {
+      return <FirebaseConfigError />;
+  }
+
+  const {app, auth, firestore, database} = initializeFirebase();
 
   return (
-    <FirebaseProvider app={app} auth={auth} firestore={firestore}>
+    <FirebaseProvider app={app} auth={auth} firestore={firestore} database={database}>
       <SessionHandler />
       {children}
     </FirebaseProvider>

@@ -14,8 +14,7 @@ export function getFirebaseConfig() {
   if (!firebaseConfig.apiKey) {
     throw new Error('Firebase configuration is missing. Please check your .env file and ensure all NEXT_PUBLIC_FIREBASE_* variables are set.');
   }
-  if (!firebaseConfig.databaseURL) {
-      throw new Error('Firebase configuration is missing. Please check your .env file and ensure NEXT_PUBLIC_FIREBASE_DATABASE_URL is set.');
-  }
+  // The validation for databaseURL is now handled in the FirebaseClientProvider
+  // to prevent a hard crash and show a user-friendly error screen instead.
   return firebaseConfig;
 }
