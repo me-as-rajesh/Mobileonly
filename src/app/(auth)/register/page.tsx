@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
-import { useAuth, useFirestore } from "@/firebase";
+import { useAuth } from "@/firebase";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -27,8 +27,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { createUserProfile } from "@/lib/firestore";
-import { doc, getDoc } from 'firebase/firestore';
+import { createUser } from "@/lib/actions/user.actions";
 
 const RegisterSchema = z.object({
   name: z.string().min(1, "Full Name is required"),
@@ -41,7 +40,6 @@ type RegisterInput = z.infer<typeof RegisterSchema>;
 
 export default function RegisterPage() {
   const auth = useAuth();
-  const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -59,10 +57,17 @@ export default function RegisterPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
       await updateProfile(userCredential.user, { displayName: data.name });
-      await createUserProfile(firestore, userCredential.user, data.role, data.name);
+      
+      await createUser({
+        uid: userCredential.user.uid,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        avatar: userCredential.user.photoURL
+      });
       
       toast({ title: "Account Created", description: "You have been successfully registered." });
-      router.push(`/profile/${userCredential.user.uid}`);
+      router.push(`/`);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -80,14 +85,16 @@ export default function RegisterPage() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      const userRef = doc(firestore, "users", result.user.uid);
-      const userDoc = await getDoc(userRef);
-      if (!userDoc.exists()) {
-        await createUserProfile(firestore, result.user, 'buyer', result.user.displayName || 'New User');
-      }
+      await createUser({
+        uid: result.user.uid,
+        email: result.user.email!,
+        name: result.user.displayName || 'New User',
+        avatar: result.user.photoURL,
+        role: 'buyer', // Default role for Google sign-up
+      });
 
       toast({ title: "Success", description: "Logged in successfully." });
-      router.push(`/profile/${result.user.uid}`);
+      router.push(`/`);
     } catch (error: any) {
       toast({
         variant: "destructive",

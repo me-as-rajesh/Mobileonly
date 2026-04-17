@@ -14,7 +14,6 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { ClientDate } from "./client-date";
 
 type ListingCardProps = {
@@ -23,9 +22,7 @@ type ListingCardProps = {
 };
 
 export function ListingCard({ listing, className }: ListingCardProps) {
-  const imageUrl =
-    PlaceHolderImages.find((img) => img.id === listing.images[0])?.imageUrl ??
-    "https://picsum.photos/seed/placeholder/800/600";
+  const imageUrl = listing.images?.[0] ?? "https://picsum.photos/seed/placeholder/800/600";
 
   return (
     <Card

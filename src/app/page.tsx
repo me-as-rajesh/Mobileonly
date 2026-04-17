@@ -4,15 +4,54 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { listings } from "@/lib/data";
 import { ListingCard } from "@/components/listing-card";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { Listing } from "@/lib/types";
+import { getListings } from "@/lib/actions/listing.actions";
+import { Skeleton } from "@/components/ui/skeleton";
+
+function FeaturedListings() {
+  const [listings, setListings] = React.useState<Listing[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchListings = async () => {
+      setLoading(true);
+      const featured = await getListings({ limit: 8 });
+      setListings(featured);
+      setLoading(false);
+    };
+    fetchListings();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="aspect-[4/3] w-full" />
+            <Skeleton className="h-5 w-5/6" />
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-8 w-1/3" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+      {listings.map((listing) => (
+        <ListingCard key={listing.id} listing={listing} />
+      ))}
+    </div>
+  );
+}
 
 export default function Home() {
-  const featuredListings = listings.slice(0, 8);
   const router = useRouter();
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -76,11 +115,7 @@ export default function Home() {
                   Check out these top-tier devices, handpicked for you. Quality and value, guaranteed.
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                {featuredListings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} />
-                ))}
-              </div>
+              <FeaturedListings />
               <div className="flex justify-center">
                 <Link href="/listings" passHref>
                   <Button variant="outline" size="lg">View All Listings</Button>

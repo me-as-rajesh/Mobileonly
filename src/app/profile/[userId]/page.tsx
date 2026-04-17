@@ -1,17 +1,15 @@
-'use client';
+'use server';
 
 import * as React from "react";
 import { notFound } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { listings } from '@/lib/data';
-import { Star, Verified } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { ListingCard } from '@/components/listing-card';
-import { useDoc, useFirestore, type UserProfile } from "@/firebase";
-import { doc } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ClientDate } from "@/components/client-date";
+import { getUserByUid, UserProfile } from "@/lib/actions/user.actions";
+import { getListings } from "@/lib/actions/listing.actions";
 
 function ProfilePageSkeleton() {
   return (
@@ -33,21 +31,20 @@ function ProfilePageSkeleton() {
   )
 }
 
-export default function ProfilePage({ params }: { params: { userId: string } }) {
-  const firestore = useFirestore();
-  const userRef = doc(firestore, 'users', params.userId);
-  const { data: userProfile, loading } = useDoc<UserProfile>(userRef);
-
-  if (loading) {
-    return <ProfilePageSkeleton />;
+export default async function ProfilePage({ params }: { params: { userId: string } }) {
+  let userProfile: UserProfile | null;
+  try {
+    userProfile = await getUserByUid(params.userId);
+  } catch (error) {
+    console.error(error);
+    notFound();
   }
 
   if (!userProfile) {
     notFound();
   }
 
-  // TODO: Fetch user's listings from Firestore instead of mock data
-  const userListings = listings.filter(l => l.seller.id === userProfile.uid);
+  const userListings = await getListings({ sellerId: userProfile._id.toString() });
 
   return (
     <div className="bg-muted/40">
@@ -61,23 +58,15 @@ export default function ProfilePage({ params }: { params: { userId: string } }) 
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-bold font-headline">{userProfile.name}</h1>
-                {/* Note: isVerified is not on the default profile yet */}
-                {/* {userProfile.isVerified && (
-                  <Badge variant="default" className="gap-1">
-                    <Verified className="h-4 w-4" />
-                    Verified
-                  </Badge>
-                )} */}
               </div>
               <div className="flex items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Star className="w-5 h-5 fill-primary text-primary" />
-                  {/* TODO: Replace with real rating data */}
                   <span className="font-bold text-foreground">4.8</span>
                   <span>(124 reviews)</span>
                 </div>
                 <span>•</span>
-                <span>Member since <ClientDate date={userProfile.createdAt} options={{ year: 'numeric' }} /></span>
+                <span>Member since <ClientDate date={userProfile.createdAt.toString()} options={{ year: 'numeric' }} /></span>
               </div>
               <p className="text-muted-foreground pt-2">
                 Tech enthusiast and trusted seller on ConnectCell. All devices are carefully inspected.

@@ -1,7 +1,6 @@
-"use client";
+'use client';
 
 import * as React from 'react';
-import { listings as allListings } from "@/lib/data";
 import { ListingCard } from "@/components/listing-card";
 import { Filters } from "@/components/filters";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ import {
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSearchParams, useRouter } from "next/navigation";
+import type { Listing } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface FilterState {
   brand: string;
@@ -23,63 +24,41 @@ export interface FilterState {
   district: string;
 }
 
-export function ListingsClient() {
+interface ListingsClientProps {
+  listings: Listing[];
+  searchQuery: string | null;
+}
+
+export function ListingsClient({ listings, searchQuery }: ListingsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const searchQuery = searchParams.get('q');
 
   const [filters, setFilters] = React.useState<FilterState>({
-    brand: "all",
-    priceRange: [0, 150000],
-    condition: "all",
-    ram: null,
-    storage: null,
-    district: 'all',
+    brand: searchParams.get('brand') || "all",
+    priceRange: [
+      Number(searchParams.get('minPrice') || 0), 
+      Number(searchParams.get('maxPrice') || 150000)
+    ],
+    condition: searchParams.get('condition') || "all",
+    ram: Number(searchParams.get('ram')) || null,
+    storage: Number(searchParams.get('storage')) || null,
+    district: searchParams.get('district') || 'all',
   });
 
-  const filteredListings = React.useMemo(() => {
-    return allListings.filter((listing) => {
-      // Search Query
-      if (searchQuery) {
-        const searchLower = searchQuery.toLowerCase();
-        if (
-          !listing.title.toLowerCase().includes(searchLower) &&
-          !listing.brand.toLowerCase().includes(searchLower) &&
-          !listing.model.toLowerCase().includes(searchLower)
-        ) {
-          return false;
-        }
-      }
-      // Price
-      if (
-        listing.price < filters.priceRange[0] ||
-        listing.price > filters.priceRange[1]
-      ) {
-        return false;
-      }
-      // Brand
-      if (filters.brand !== "all" && listing.brand.toLowerCase() !== filters.brand) {
-        return false;
-      }
-      // Condition
-      if (filters.condition !== "all" && listing.condition !== filters.condition) {
-        return false;
-      }
-      // RAM
-      if (filters.ram && listing.variant.ram !== filters.ram) {
-        return false;
-      }
-      // Storage
-      if (filters.storage && listing.variant.storage !== filters.storage) {
-        return false;
-      }
-      // District
-      if (filters.district !== "all" && listing.location.district !== filters.district) {
-        return false;
-      }
-      return true;
-    });
-  }, [filters, searchQuery]);
+  const applyFilters = () => {
+    const params = new URLSearchParams(searchParams);
+    if (searchQuery) params.set('q', searchQuery);
+    
+    if (filters.brand !== 'all') params.set('brand', filters.brand); else params.delete('brand');
+    if (filters.condition !== 'all') params.set('condition', filters.condition); else params.delete('condition');
+    if (filters.ram) params.set('ram', String(filters.ram)); else params.delete('ram');
+    if (filters.storage) params.set('storage', String(filters.storage)); else params.delete('storage');
+    if (filters.district !== 'all') params.set('district', filters.district); else params.delete('district');
+    params.set('minPrice', String(filters.priceRange[0]));
+    params.set('maxPrice', String(filters.priceRange[1]));
+    
+    router.push(`/listings?${params.toString()}`);
+  };
 
   return (
     <div className="container mx-auto grid grid-cols-1 md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 py-8 px-4 md:px-6">
@@ -89,16 +68,17 @@ export function ListingsClient() {
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
           </Button>
           <h2 className="text-2xl font-bold font-headline mb-4">Filters</h2>
-          <ScrollArea className="h-[calc(100vh-14rem)] pr-4">
+          <ScrollArea className="h-[calc(100vh-18rem)] pr-4">
             <Filters filters={filters} setFilters={setFilters} />
           </ScrollArea>
+           <Button onClick={applyFilters} className="w-full mt-4">Apply Filters</Button>
         </div>
       </aside>
 
       <main>
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold font-headline tracking-tighter sm:text-4xl">
-            {searchQuery ? `Results for "${searchQuery}"` : "All Listings"} ({filteredListings.length})
+            {searchQuery ? `Results for "${searchQuery}"` : "All Listings"} ({listings.length})
           </h1>
           <div className="flex items-center">
              <Button variant="ghost" onClick={() => router.back()} className="md:hidden mr-2">
@@ -119,15 +99,16 @@ export function ListingsClient() {
                   <ScrollArea className="h-[70vh]">
                     <Filters filters={filters} setFilters={setFilters} />
                   </ScrollArea>
+                  <Button onClick={applyFilters} className="w-full mt-4">Apply Filters</Button>
                 </div>
               </DrawerContent>
             </Drawer>
           </div>
         </div>
 
-        {filteredListings.length > 0 ? (
+        {listings.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {filteredListings.map((listing) => (
+            {listings.map((listing) => (
               <ListingCard key={listing.id} listing={listing} />
             ))}
           </div>

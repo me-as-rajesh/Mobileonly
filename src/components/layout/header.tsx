@@ -40,6 +40,7 @@ import { signOut } from "firebase/auth";
 import { useAuth } from "@/firebase";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
+import { getAuthenticatedUserProfile, UserProfile } from "@/lib/actions/user.actions";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -55,10 +56,24 @@ const authenticatedNavItems = [
 export function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile, loading } = useUser();
+  const { user, loading: userLoading } = useUser();
   const auth = useAuth();
+  const [profile, setProfile] = React.useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = React.useState(true);
   
   const currentNavItems = user ? authenticatedNavItems : navItems;
+
+  React.useEffect(() => {
+    if (user) {
+      setProfileLoading(true);
+      getAuthenticatedUserProfile()
+        .then(p => setProfile(p))
+        .finally(() => setProfileLoading(false));
+    } else {
+      setProfile(null);
+      setProfileLoading(false);
+    }
+  }, [user]);
 
   // Do not render header on admin routes
   if (pathname.startsWith('/admin')) {
@@ -67,6 +82,7 @@ export function Header() {
 
   const handleLogout = () => {
     signOut(auth);
+    router.push('/');
   }
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -155,7 +171,7 @@ export function Header() {
                 <Button className="hidden sm:inline-flex">Sell Now</Button>
             </Link>
         )}
-        {loading ? (
+        {(userLoading || profileLoading) ? (
             <Skeleton className="h-10 w-10 rounded-full" />
         ) : user && profile ? (
             <DropdownMenu>

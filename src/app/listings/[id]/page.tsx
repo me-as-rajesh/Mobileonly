@@ -3,8 +3,6 @@
 import * as React from 'react';
 import { notFound, useRouter } from "next/navigation";
 import Image from "next/image";
-import { listings } from "@/lib/data";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import {
   Carousel,
   CarouselContent,
@@ -34,22 +32,26 @@ import {
   Loader2,
   ArrowLeft,
 } from "lucide-react";
-import type { Listing } from "@/lib/types";
+import type { Listing, Seller } from "@/lib/types";
 import { ClientDate } from "@/components/client-date";
 import { useUser } from "@/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
+import { getListingById } from '@/lib/actions/listing.actions';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getAuthenticatedUserProfile } from '@/lib/actions/user.actions';
 
-function StartChatButton({ listing }: { listing: Listing }) {
-    const { user, profile } = useUser();
+
+function StartChatButton({ listing, seller }: { listing: Listing, seller: Seller }) {
+    const { user } = useUser();
     const router = useRouter();
     const { toast } = useToast();
     const firestore = useFirestore();
     const [isLoading, setIsLoading] = React.useState(false);
 
     const handleStartChat = async () => {
-        if (!user || !profile) {
+        if (!user) {
             toast({
                 variant: 'destructive',
                 title: 'Authentication Required',
@@ -59,7 +61,7 @@ function StartChatButton({ listing }: { listing: Listing }) {
             return;
         }
 
-        if (user.uid === listing.seller.id) {
+        if (user.uid === seller.id) {
              toast({
                 variant: 'destructive',
                 title: 'This is your listing',
@@ -86,23 +88,24 @@ function StartChatButton({ listing }: { listing: Listing }) {
                 router.push(`/messages/${existingConvs.docs[0].id}`);
             } else {
                 // Create a new conversation
-                const sellerProfile = listing.seller;
-                
+                const buyerProfile = await getAuthenticatedUserProfile();
+                if (!buyerProfile) throw new Error("Could not find your user profile.");
+
                 const newConversationRef = await addDoc(conversationsRef, {
                     listingId: listing.id,
                     buyerId: user.uid,
-                    sellerId: listing.seller.id,
-                    participants: [user.uid, listing.seller.id],
+                    sellerId: seller.id,
+                    participants: [user.uid, seller.id],
                     createdAt: serverTimestamp(),
                     lastMessageAt: serverTimestamp(),
                     lastMessageText: '',
                     listingTitle: listing.title,
                     listingPrice: listing.price,
-                    listingImage: PlaceHolderImages.find(p => p.id === listing.images[0])?.imageUrl,
-                    buyerName: profile.name,
-                    buyerAvatar: profile.avatar,
-                    sellerName: sellerProfile.name,
-                    sellerAvatar: sellerProfile.avatar,
+                    listingImage: listing.images[0],
+                    buyerName: buyerProfile.name,
+                    buyerAvatar: buyerProfile.avatar,
+                    sellerName: seller.name,
+                    sellerAvatar: seller.avatar,
                 });
                 router.push(`/messages/${newConversationRef.id}`);
             }
@@ -130,10 +133,51 @@ type PageProps = {
   params: { id: string };
 };
 
+function ListingDetailSkeleton() {
+  return (
+    <div className="container mx-auto max-w-6xl px-4 py-8 md:px-6">
+      <Skeleton className="h-10 w-40 mb-8" />
+      <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+        <div>
+          <Skeleton className="aspect-[4/3] w-full rounded-lg" />
+        </div>
+        <div className="flex flex-col gap-8">
+          <div className="space-y-4">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-8 w-1/4" />
+            <Skeleton className="h-5 w-1/2" />
+          </div>
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-48 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ListingDetailPage({ params }: PageProps) {
   const router = useRouter();
-  const listing = listings.find((l) => l.id === params.id);
+  const [listing, setListing] = React.useState<Listing | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  
+  React.useEffect(() => {
+    const fetchListing = async () => {
+      setLoading(true);
+      const fetchedListing = await getListingById(params.id);
+      if (fetchedListing) {
+        setListing(fetchedListing);
+      }
+      setLoading(false);
+    };
+    fetchListing();
+  }, [params.id]);
 
+
+  if (loading) {
+    return <ListingDetailSkeleton />;
+  }
+  
   if (!listing) {
     notFound();
   }
@@ -153,14 +197,6 @@ export default function ListingDetailPage({ params }: PageProps) {
     createdAt,
   } = listing;
 
-  const imageDetails = images.map(
-    (id) =>
-      PlaceHolderImages.find((p) => p.id === id) || {
-        id,
-        imageUrl: `https://picsum.photos/seed/${id}/800/600`,
-        imageHint: "smartphone",
-      }
-  );
 
   return (
     <div className="container mx-auto max-w-6xl px-4 py-8 md:px-6">
@@ -171,17 +207,16 @@ export default function ListingDetailPage({ params }: PageProps) {
         <div className="md:sticky md:top-24 self-start">
           <Carousel>
             <CarouselContent>
-              {imageDetails.map((img) => (
-                <CarouselItem key={img.id}>
+              {images.map((imgUrl, index) => (
+                <CarouselItem key={index}>
                   <Card className="overflow-hidden">
                     <div className="aspect-[4/3]">
                       <Image
-                        src={img.imageUrl}
+                        src={imgUrl}
                         alt={title}
                         width={800}
                         height={600}
                         className="object-cover w-full h-full"
-                        data-ai-hint={img.imageHint}
                       />
                     </div>
                   </Card>
@@ -288,7 +323,7 @@ export default function ListingDetailPage({ params }: PageProps) {
                 <Heart className="mr-2 h-5 w-5" />
                 Favorite
             </Button>
-            <StartChatButton listing={listing} />
+            <StartChatButton listing={listing} seller={listing.seller} />
           </div>
         </div>
       </div>
@@ -307,4 +342,3 @@ function SpecItem({ icon: Icon, label, value }: { icon: React.ElementType, label
         </div>
     )
 }
-    

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/logo";
 import Link from "next/link";
-import { useAuth, useFirestore } from "@/firebase";
+import { useAuth } from "@/firebase";
 import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
@@ -25,8 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { doc, getDoc } from 'firebase/firestore';
-import { createUserProfile } from '@/lib/firestore';
+import { createUser } from '@/lib/actions/user.actions';
 
 const LoginSchema = z.object({
   email: z.string().email(),
@@ -37,7 +36,6 @@ type LoginInput = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
   const auth = useAuth();
-  const firestore = useFirestore();
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = React.useState(false);
@@ -52,7 +50,7 @@ export default function LoginPage() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       toast({ title: "Success", description: "Logged in successfully." });
-      router.push(`/profile/${userCredential.user.uid}`);
+      router.push(`/`);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -69,15 +67,18 @@ export default function LoginPage() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-
-      const userRef = doc(firestore, "users", result.user.uid);
-      const userDoc = await getDoc(userRef);
-      if (!userDoc.exists()) {
-        await createUserProfile(firestore, result.user, 'buyer', result.user.displayName || 'New User');
-      }
+      
+      // This will create a user in MongoDB if they don't exist
+      await createUser({
+        uid: result.user.uid,
+        email: result.user.email!,
+        name: result.user.displayName || 'New User',
+        avatar: result.user.photoURL,
+        role: 'buyer',
+      });
 
       toast({ title: "Success", description: "Logged in successfully." });
-      router.push(`/profile/${result.user.uid}`);
+      router.push(`/`);
     } catch (error: any) {
       toast({
         variant: "destructive",

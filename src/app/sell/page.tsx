@@ -41,6 +41,8 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import locationData from '../../../states-and-districts.json';
+import { createListing } from "@/lib/actions/listing.actions";
+import { useRouter } from "next/navigation";
 
 const states = locationData.states.map(s => ({ name: s.state, districts: s.districts }));
 
@@ -68,6 +70,7 @@ const CreateListingSchema = z.object({
 type CreateListingInput = z.infer<typeof CreateListingSchema>;
 
 export default function SellPage() {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isPriceLoading, setIsPriceLoading] = React.useState(false);
   const [priceSuggestion, setPriceSuggestion] = React.useState<PriceSuggestion | null>(null);
@@ -130,15 +133,24 @@ export default function SellPage() {
 
   const onFinalSubmit: SubmitHandler<CreateListingInput> = async (data) => {
     setIsSubmitting(true);
-    console.log("Final Listing Data:", data);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast({
-      title: "Listing Created!",
-      description: "Your new listing has been successfully created.",
-    });
-    form.reset();
-    setPriceSuggestion(null);
-    setIsSubmitting(false);
+    try {
+      await createListing(data);
+      toast({
+        title: "Listing Created!",
+        description: "Your new listing has been successfully created.",
+      });
+      form.reset();
+      setPriceSuggestion(null);
+      router.push('/my-listings');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Failed to create listing',
+        description: (error as Error).message,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,12 +171,6 @@ export default function SellPage() {
     const uploadedUrls = form.getValues('images');
 
     for (const file of Array.from(files)) {
-      const fileBuffer = await file.arrayBuffer();
-      const mime = file.type;
-      const encoding = 'base64';
-      const base64Data = Buffer.from(fileBuffer).toString('base64');
-      const fileUri = 'data:' + mime + ';' + encoding + ',' + base64Data;
-      
       const formData = new FormData();
       formData.append('file', file);
       try {
@@ -187,13 +193,13 @@ export default function SellPage() {
         break; 
       }
     }
-    form.setValue('images', uploadedUrls);
+    form.setValue('images', uploadedUrls, { shouldValidate: true });
     setIsUploading(false);
   };
 
   const handleRemoveImage = (urlToRemove: string) => {
     const currentImages = form.getValues('images');
-    form.setValue('images', currentImages.filter(url => url !== urlToRemove));
+    form.setValue('images', currentImages.filter(url => url !== urlToRemove), { shouldValidate: true });
   }
 
 
@@ -443,7 +449,7 @@ export default function SellPage() {
                 </AlertDescription>
               </Alert>
             )}
-             <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+             <Button type="submit" disabled={isSubmitting || isUploading} className="w-full" size="lg">
               {isSubmitting ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (

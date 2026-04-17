@@ -4,6 +4,33 @@
 
 import {FirebaseProvider, initializeFirebase} from '@/firebase';
 import type {ReactNode} from 'react';
+import { useEffect } from 'react';
+import { useAuth } from './provider';
+
+function SessionHandler() {
+  const auth = useAuth();
+  
+  useEffect(() => {
+    const handleAuthChange = async (user: any) => {
+      if (user) {
+        const idToken = await user.getIdToken();
+        await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        });
+      } else {
+        await fetch('/api/auth/session', { method: 'DELETE' });
+      }
+    };
+    
+    const unsubscribe = auth.onIdTokenChanged(handleAuthChange);
+    return () => unsubscribe();
+  }, [auth]);
+
+  return null;
+}
+
 
 /**
  * Initializes Firebase on the client and provides the Firebase context.
@@ -14,6 +41,7 @@ export function FirebaseClientProvider({children}: {children: ReactNode}) {
 
   return (
     <FirebaseProvider app={app} auth={auth} firestore={firestore}>
+      <SessionHandler />
       {children}
     </FirebaseProvider>
   );

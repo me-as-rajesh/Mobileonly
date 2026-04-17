@@ -2,6 +2,8 @@ import * as React from 'react';
 import { Suspense } from 'react';
 import { ListingsClient } from './client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getListings } from '@/lib/actions/listing.actions';
+import type { SearchParams } from '@/lib/types';
 
 function ListingsPageSkeleton() {
   return (
@@ -37,11 +39,21 @@ function ListingsPageSkeleton() {
   );
 }
 
-export default function ListingsPage() {
+interface ListingsPageProps {
+  searchParams: SearchParams;
+}
+
+async function Listings({ searchParams }: ListingsPageProps) {
+  const listings = await getListings(searchParams);
+  const searchQuery = searchParams.q || null;
+  return <ListingsClient listings={listings} searchQuery={searchQuery} />;
+}
+
+
+export default function ListingsPage({ searchParams }: ListingsPageProps) {
   return (
-    // You can add a fallback UI here while the client component is loading
     <Suspense fallback={<ListingsPageSkeleton />}>
-      <ListingsClient />
+      <Listings searchParams={searchParams} />
     </Suspense>
   );
 }

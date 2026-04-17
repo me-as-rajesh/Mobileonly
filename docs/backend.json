@@ -14,6 +14,34 @@
       },
       "required": ["uid", "name", "email", "role", "createdAt"]
     },
+     "Listing": {
+      "title": "Listing",
+      "description": "Represents a marketplace listing for a used smartphone.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "brand": { "type": "string" },
+        "model": { "type": "string" },
+        "ram": { "type": "number" },
+        "storage": { "type": "number" },
+        "condition": { "type": "string", "enum": ["new", "like_new", "good", "fair"] },
+        "purchaseYear": { "type": "number" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "state": { "type": "string" },
+            "district": { "type": "string" },
+            "address": { "type": "string" }
+          }
+        },
+        "images": { "type": "array", "items": { "type": "string", "format": "uri" } },
+        "seller": { "type": "string", "description": "The UID of the seller user." },
+        "status": { "type": "string", "enum": ["active", "sold", "flagged"], "default": "active" }
+      },
+      "required": ["title", "description", "price", "brand", "model", "ram", "storage", "condition", "location", "images", "seller"]
+    },
     "Conversation": {
       "title": "Conversation",
       "description": "Metadata for a chat conversation between a buyer and a seller about a listing.",
@@ -50,11 +78,20 @@
   "auth": {
     "providers": ["google.com", "password"]
   },
+  "mongodb": {
+    "database": "mobileonly",
+    "collections": {
+      "users": {
+        "schema": { "$ref": "#/entities/UserProfile" },
+        "description": "Stores user profile data."
+      },
+      "listings": {
+        "schema": { "$ref": "#/entities/Listing" },
+        "description": "Stores all marketplace listings."
+      }
+    }
+  },
   "firestore": {
-    "/users/{userId}": {
-      "schema": { "$ref": "#/entities/UserProfile" },
-      "description": "Stores public user profile data."
-    },
     "/conversations/{conversationId}": {
       "schema": { "$ref": "#/entities/Conversation" },
       "description": "Stores metadata for each conversation."

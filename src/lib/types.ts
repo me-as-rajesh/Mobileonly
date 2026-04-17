@@ -1,5 +1,3 @@
-import type { PlaceHolderImages } from "./placeholder-images";
-
 export type Location = {
   district: string;
   state: string;
@@ -7,7 +5,7 @@ export type Location = {
 };
 
 export type Seller = {
-  id: string;
+  id: string; // This is the MongoDB ObjectId as a string
   name: string;
   avatar: string;
   rating: number;
@@ -16,7 +14,7 @@ export type Seller = {
 };
 
 export type Listing = {
-  id: string;
+  id: string; // This is the MongoDB ObjectId as a string
   title: string;
   brand: string;
   model: string;
@@ -29,7 +27,7 @@ export type Listing = {
   isNegotiable: boolean;
   condition: "new" | "like_new" | "good" | "fair";
   description: string;
-  images: (typeof PlaceHolderImages)[number]["id"][];
+  images: string[];
   location: Location;
   purchaseYear?: number;
   seller: Seller;
@@ -39,6 +37,19 @@ export type Listing = {
   createdAt: string;
   status?: 'active' | 'sold' | 'flagged';
 };
+
+export interface SearchParams {
+  q?: string;
+  brand?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  condition?: string;
+  ram?: string;
+  storage?: string;
+  district?: string;
+  limit?: number;
+  sellerId?: string;
+}
 
 export const BRANDS = [
   "Apple",
